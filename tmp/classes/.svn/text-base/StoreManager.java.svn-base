@@ -1,0 +1,151 @@
+package cn.gov.cbrc.db;
+
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
+import cn.gov.cbrc.wh.log.Log;
+import cn.gov.cbrc.wh.log.LogFactory;
+import cn.gov.cbrc.wh.util.Config;
+
+public class StoreManager {
+
+	final private static Log log = LogFactory.getLog(StoreManager.class);
+	private static ThreadLocal<Session> sessionLocal = new ThreadLocal<Session>();
+	private static DataSource ds = null;
+	
+	
+	private static void init() {
+		String jndi_name = Config.getConfig("jndi.datasource.name");
+		if (jndi_name == null || jndi_name.length() == 0) {
+
+			String dc = Config.getConfig("database.connection");
+
+			String[] db = dc.split(":");
+
+			if (db.length != 5) {
+				if (log.isErrorEnabled()) {
+					log.error("Database connection error!");
+				}
+				return;
+			} else {
+				if (log.isDebugEnabled()) {
+					log.debug("ServerName=" + db[0] + ",portNumber=" + db[1]
+							+ ",database=" + db[2] + ",user=" + db[3]
+							+ ",password=" + db[4]);
+				}
+			}
+			
+			
+			try {
+				Class<?> clazz = Class.forName("com.ibm.db2.jcc.DB2DataSource");
+				Object db2ds = clazz.newInstance();				
+				Method m = clazz.getMethod("setServerName",String.class);
+				if (m != null) {
+					m.invoke(db2ds,db[0]);
+				}
+				
+				m = clazz.getMethod("setPortNumber",Integer.TYPE);
+				if (m != null) {
+					m.invoke(db2ds,Integer.parseInt(db[1]));
+				}
+				
+				m = clazz.getMethod("setDatabaseName",String.class);
+				if (m != null) {
+					m.invoke(db2ds,db[2]);
+				}
+				m = clazz.getMethod("setUser",String.class);
+				if (m != null) {
+					m.invoke(db2ds,db[3]);
+				}
+				
+				m = clazz.getMethod("setPassword",String.class);
+				if (m != null) {
+					m.invoke(db2ds,db[4]);
+				}
+				
+				m = clazz.getMethod("setDriverType",Integer.TYPE);
+				if (m != null) {
+					m.invoke(db2ds,new Integer(4));
+				}
+				ds = (DataSource)db2ds;
+			} catch (Exception e) {
+				if (log.isErrorEnabled()) {
+					log.error("Database connection error!",e);
+				}
+			}
+			
+			
+						
+		} else {
+			try {
+				Context cntxt = new InitialContext();
+				ds = (DataSource) cntxt.lookup(jndi_name);
+			} catch (NamingException e) {
+				if (log.isErrorEnabled()) {
+					log.error("Can't initial datasource", e);
+				}
+				ds = null;
+			}
+		}
+	}
+
+	public static Session openSession() {
+		if (ds == null) {
+			init();
+		}
+		Session session = null;
+		try {
+			session = sessionLocal.get();
+			if (session == null) {
+				session = new Session(ds.getConnection());
+				sessionLocal.set(session);
+			}else{
+				if(session.connection().isClosed()){
+					session = new Session(ds.getConnection());
+					sessionLocal.set(session);
+				}
+			}
+		} catch (SQLException e) {
+			log.error("Open session error!", e);
+		}
+		return session;
+	}
+
+	public static void closeSession(Session session) {
+		if (session != null) {
+			session.close();
+		}
+	}
+
+	public static ResultSet queryList(String sql) {
+		Connection conn = null;
+
+		PreparedStatement stmt;
+		try {
+			conn = ds.getConnection();
+			conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+			stmt = conn.prepareStatement(sql);
+			ResultSet rs = stmt.executeQuery();
+
+			return rs;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+
+	}
+
+	public static void main(String[] args) {
+		StoreManager.openSession();
+	}
+}

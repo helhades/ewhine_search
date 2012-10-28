@@ -1,0 +1,86 @@
+package cn.gov.cbrc.db;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Savepoint;
+
+import cn.gov.cbrc.wh.log.Log;
+import cn.gov.cbrc.wh.log.LogFactory;
+
+public class TransactionImpl implements Transaction {
+	final private static Log log = LogFactory.getLog(TransactionImpl.class);
+	private int transType = 0;
+	private SessionContext context;
+	private boolean closed = false;
+	private Savepoint sp = null;
+
+	public TransactionImpl(SessionContext _sc, int _transType) {
+		this.transType = _transType;
+		this.context = _sc;
+		Connection con = _sc.getConnection();
+		try {
+			if (con.getAutoCommit())
+				con.setAutoCommit(false);
+		} catch (SQLException e) {
+			log.error("Change transaction type error!", e);
+			throw new IllegalStateException("Change transaction type error!", e);
+		}
+		try {
+			if (!context.isOnlyTransaction()) {
+				sp = con.setSavepoint();
+			}
+
+		} catch (SQLException e) {
+			log.error("Set savepoint error!", e);
+			throw new RuntimeException("Change transaction type error!", e);
+		}
+
+	}
+
+	public void commit() {
+
+		if (closed) {
+			log.warn("Transaction already finished!");
+			return;
+		}
+		context.removeLast();
+		try {
+			if (sp == null) {
+				Connection conn = context.getConnection();
+				conn.commit();
+			}
+		} catch (SQLException e) {
+			log.error("Rollback savepoint error!", e);
+		}
+
+		closed = true;
+	}
+
+	public void rollback() {
+		if (closed) {
+			log.warn("Transaction already finished!");
+			return;
+		}
+
+		context.removeLast();
+
+		Connection conn = context.getConnection();
+		try {
+			if (sp != null) {
+				log.warn("Transaction rollback sp!");
+				conn.rollback(sp);
+			} else {
+				log.warn("Transaction rollback!");
+				conn.rollback();
+			}
+		} catch (SQLException e) {
+			log.error("Rollback savepoint error!", e);
+		}
+		closed = true;
+	}
+
+	public boolean isClosed() {
+		return closed;
+	}
+
+}

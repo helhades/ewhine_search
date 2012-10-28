@@ -1,0 +1,25 @@
+package cn.gov.cbrc.db;
+
+public class Order {
+	public String sql = null;
+
+	private Order(String column, String upDown) {
+		sql = column + " " + upDown;
+	}
+
+	public static Order asc(String column) {
+		return new Order(column, "asc");
+
+	}
+	
+	public static Order desc(String column) {
+		return new Order(column, "desc");
+
+	}
+	
+	@Override
+	public String toString() {
+		return sql;
+	}
+
+}

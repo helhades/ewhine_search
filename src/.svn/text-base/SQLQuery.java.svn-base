@@ -1,0 +1,320 @@
+package cn.gov.cbrc.db;
+
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import javax.persistence.Column;
+
+import cn.gov.cbrc.wh.log.Log;
+import cn.gov.cbrc.wh.log.LogFactory;
+
+public class SQLQuery {
+
+	final private static Log log = LogFactory.getLog(SQLQuery.class);
+	private Connection conn;
+	private String sql = null;
+	private HashMap<String, Field> fieldArr = new HashMap<String, Field>();
+	PreparedStatement pstm = null;
+
+	public SQLQuery(Connection con, String _sql) {
+		this.conn = con;
+		this.sql = _sql;
+		try {
+			pstm = conn.prepareStatement(sql);
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Prepare sql error.", e);
+			}
+		}
+
+	}
+
+	public <T> Object uniqueResult(ResultSetHandler handler) {
+		Object ret = null;
+
+		ResultSet rs = null;
+		try {
+
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sql);
+			}
+			rs = pstm.executeQuery();
+
+			if (handler != null) {
+				
+				handler.process(rs); 
+
+			} else {
+				while (rs.next()) {
+					ret = rs.getObject(1);
+					break;
+				}
+			}
+
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error. sql=" + sql, e);
+			}
+
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+			if (pstm != null) {
+				try {
+					pstm.close();
+					pstm = null;
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+		}
+
+		return ret;
+	}
+
+	public Object uniqueResult() {
+		return uniqueResult(null);
+	}
+
+	public void executeQuery(ResultSetHandler handler) {
+
+		ResultSet rs = null;
+		try {
+
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sql);
+			}
+			rs = pstm.executeQuery();
+			if (handler != null) {
+				handler.process(rs);
+			}
+
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.sql=" + sql, e);
+			}
+			throw new RuntimeException(e);
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+			if (pstm != null) {
+				try {
+					pstm.close();
+					pstm = null;
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+		}
+
+	}
+
+	public <T> ArrayList<T> executeQuery(final Class<T> clazz) {
+		
+		Field[] fields = clazz.getDeclaredFields();
+
+		for (int i = 0; i < fields.length; i++) {
+			if (fields[i].isAnnotationPresent(javax.persistence.Column.class)) {
+				Field f = fields[i];
+				Column col = f.getAnnotation(javax.persistence.Column.class);
+				String colName = col.name();
+
+				f.setAccessible(true);
+				fieldArr.put(colName.toUpperCase(), f);
+			}
+		}
+		
+		final ArrayList<T> ret = new ArrayList<T>();
+		
+		ResultSetHandler handler = new ResultSetHandler() {
+
+			public int process(ResultSet rs) throws SQLException {
+				
+				ResultSetMetaData mtdata = rs.getMetaData();
+				int cCount = mtdata.getColumnCount();
+				Field[] fileds = new Field[cCount];
+				for (int i = 0; i < cCount; i++) {
+					String a = mtdata.getColumnName(i + 1);
+					fileds[i] = fieldArr.get(a.toUpperCase());
+				}
+				
+				try {
+					while (rs.next()) {
+						T obj = clazz.newInstance();
+						for (int i = 0; i < fileds.length; i++) {
+							Field f = fileds[i];
+							if (f != null) {
+								Object o = rs.getObject(i + 1);
+								if (o != null) {
+									if (f.getType() == java.lang.String.class) {
+										f.set(obj, o.toString());
+									} else {
+										f.set(obj, o);
+									}
+								}
+							}
+						}
+
+						ret.add(obj);
+					}
+				} catch (InstantiationException e) {
+					if (log.isErrorEnabled()) {
+						log.error("Execute Error.", e);
+					}
+
+				} catch (IllegalAccessException e) {
+					if (log.isErrorEnabled()) {
+						log.error("Execute Error.", e);
+					}
+				}
+				return 0;
+			}
+
+		};
+		
+		executeQuery(handler);
+		return ret;
+	}
+
+	public void setParameter(int i, Object value) {
+
+		try {
+			if (pstm != null)
+				pstm.setObject(i, value);
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		}
+	}
+
+	public void setNull(int i, int sqlType) {
+
+		try {
+			if (pstm != null)
+				pstm.setNull(i, sqlType);
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		}
+	}
+
+	public void setParameterList(int idx, String[] arr) {
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < arr.length; i++) {
+			String p = arr[i];
+			if (i > 0)
+				sb.append("','");
+			sb.append(p);
+		}
+		try {
+			pstm.setObject(idx, sb.toString());
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		}
+	}
+
+
+	public void addBatch() {
+		try {
+			pstm.addBatch();
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error. sql=" + sql, e);
+			}
+		}
+	}
+
+	public int[] executeBatch() {
+		try {
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sql);
+			}
+			return pstm.executeBatch();
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		}
+		return new int[0];
+	}
+
+	/**
+	 * Close pstm at end execute batch.
+	 * 
+	 * @return
+	 */
+	public int[] executeLastBatch() {
+		try {
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sql);
+			}
+			return pstm.executeBatch();
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		} finally {
+			if (pstm != null) {
+				try {
+					pstm.close();
+					pstm = null;
+				} catch (SQLException e) {
+					if (log.isErrorEnabled()) {
+						log.error("Execute Error.", e);
+					}
+				}
+			}
+		}
+		return new int[0];
+	}
+
+	public int executeUpdate() {
+		try {
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sql);
+			}
+			return pstm.executeUpdate();
+		} catch (SQLException e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		} finally {
+			if (pstm != null) {
+				try {
+					pstm.close();
+					pstm = null;
+				} catch (SQLException e) {
+					if (log.isErrorEnabled()) {
+						log.error("Execute Error.", e);
+					}
+				}
+			}
+		}
+		return 0;
+	}
+
+}

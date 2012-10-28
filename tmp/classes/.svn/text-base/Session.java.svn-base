@@ -1,0 +1,103 @@
+package cn.gov.cbrc.db;
+
+import java.sql.Connection;
+
+import javax.persistence.Table;
+
+public class Session {
+	// final private static Log log = LogFactory.getLog(Session.class);
+
+	private Connection con;
+	private SessionContext sContext = null;
+
+	private Transaction trans;
+
+	public Session(Connection conn) {
+		this.con = conn;
+		sContext = new SessionContext(conn);
+	}
+
+	public <T> Query<T> createQuery(Class<T> clazz, String table) {
+		return new Query<T>(con, clazz, table);
+
+	}
+
+	public <T> Query<T> createQuery(Class<T> queryClazz) {
+		Table anno = (Table) queryClazz
+				.getAnnotation(javax.persistence.Table.class);
+		return createQuery(queryClazz, anno.name());
+	}
+
+	public SQLQuery createSQLQuery(String sql) {
+		return new SQLQuery(con, sql);
+	}
+
+	public void close() {
+
+		sContext.close();
+
+	}
+
+	public Connection connection() {
+		return con;
+	}
+
+	public void beginTransaction(int transType) {
+		this.trans = sContext.createTransaction(transType);
+	}
+
+	public void commitTransaction() {
+		if (trans != null) {
+			trans.commit();
+		}
+
+	}
+
+	public void rollbackTransaction() {
+		if (trans != null) {
+			trans.rollback();
+		}
+	}
+
+	public void beginTransaction() {
+		this.trans = sContext.createTransaction(Transaction.SUPPORT);
+	}
+
+	public void store(Object obj) {
+		Query<?> query = this.createQuery(obj.getClass());
+		query.saveNewObject(obj);
+	}
+
+	public int update(Object obj, String[] columns, Criteria c) {
+		int updCount = 0;
+		Query<?> query = this.createQuery(obj.getClass());
+		if (c != null)
+			query.addCriteria(c);
+		updCount = query.executeUpdate(obj, columns);
+		return updCount;
+	}
+	
+	public int update(Object obj) {
+		int updCount = 0;
+		Query<?> query = this.createQuery(obj.getClass());
+		updCount = query.executeUpdate(obj);
+		return updCount;
+	}
+
+	public int delete(Class<?> obj, Criteria c) {
+		int updCount = 0;
+		Query<?> query = this.createQuery(obj);
+		query.addCriteria(c);
+		updCount = query.delete();
+		return updCount;
+	}
+
+	public int delete(Object obj) {
+		int updCount = 0;
+		Query<?> query = this.createQuery(obj.getClass());
+		updCount = query.delete(obj);
+
+		return updCount;
+	}
+
+}

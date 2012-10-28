@@ -1,0 +1,10 @@
+package cn.gov.cbrc.db;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public interface ResultSetHandler {
+	
+	public  int process(ResultSet rs) throws SQLException;
+
+}

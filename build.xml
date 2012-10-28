@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="GBK"?>
+<project default="all" name="com.ewhine.search" basedir=".">
+	<property name="lib.home" value="." />
+	<property name="src.home" value="src" />
+	<property name="classes.home" value="classes" />
+	<property name="dist.home" value="lib" />
+	<property name="index.home" value="indexs" />
+	<property name="config.dist" value="config" />
+
+	<!--
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  base.classpath 设置编译的java的类
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  -->
+	<path id="base.classpath">
+		<fileset dir="${lib.home}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	<path id="build.classpath">
+		<fileset dir="${classes.home}">
+			<include name="**/*.class" />
+		</fileset>
+	</path>
+
+
+	<!-- 初始化的具体的目录信息 -->
+	<target name="init" description="初始化代码">
+		<mkdir dir="${classes.home}" />
+		<mkdir dir="${dist.home}" />
+	</target>
+
+	<target name="clean" description="清除目录">
+		<delete dir="${classes.home}" failonerror="false" />
+	</target>
+	
+	<target name="clean:index" description="清除目录">
+		<delete dir="${index.home}" failonerror="false" />
+	</target>
+
+
+	<target name="run" description="运行程序">
+		<java classname="com.ewhine.search.ZoieServer" fork="yes">
+			<classpath>
+				<path refid="base.classpath" />
+				<pathelement location="${build.home}/classes" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="all" description="整体的操作" depends="clean,init,javac,jar">
+		
+	</target>
+
+
+	<target name="javac" description="javac 编译java程序">
+
+		<javac srcdir="${src.home}" destdir="${classes.home}" deprecation="on" debug="true" encoding="GBK" source="1.5" target="1.5" includeantruntime="false">
+			<classpath refid="base.classpath" />
+			<exclude name="test/**" />
+		</javac>
+
+
+		<copy todir="${classes.home}" overwrite="true" flatten="false">
+			<fileset dir="${src.home}">
+				<!--
+				<include name="**\*.properties" />
+				<include name="**\*.xml" />
+-->
+				<include name="META-INF\MANIFEST.MF" />
+				<include name="META-INF\service.xml" />
+				<include name="*.vm" />
+			</fileset>
+		</copy>
+
+	</target>
+
+	<target name="jar" description="创建jar的文件" depends="clean,init,javac">
+		<delete file="${dist.home}/${ant.project.name}.jar" failonerror="false" />
+		<jar basedir="${classes.home}" destfile="${dist.home}/${ant.project.name}.jar">
+			<manifest>
+				<attribute name="Built-By" value="liujiang" />
+				<attribute name="Manifest-Version" value="1.2" />
+				<attribute name="Created-By" value="liujiang" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="setup" description="create runtime structure" depends="clean,init,javac,jar">
+		
+		<copy todir="${config.dist}" overwrite="false" flatten="false">
+			<fileset dir="${src.home}">
+				
+				<include name="**\*.properties" />
+				<include name="**\*.xml" />
+
+			</fileset>
+		</copy>
+	</target>
+
+
+
+</project>
+

@@ -1,0 +1,548 @@
+package cn.gov.cbrc.db;
+
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import javax.persistence.Column;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import cn.gov.cbrc.wh.log.Log;
+import cn.gov.cbrc.wh.log.LogFactory;
+
+public class Query<T> {
+
+	final private static Log log = LogFactory.getLog(Query.class);
+	private Class<T> mappingClass;
+	private Connection conn;
+	private StringBuilder sql = null;
+	private ArrayList<CColumn> columns = new ArrayList<CColumn>();
+	private ArrayList<Criteria> criterias = new ArrayList<Criteria>();
+	private ArrayList<Order> orders = new ArrayList<Order>();
+	private String table;
+	private String[] groupBy;
+
+	public Query(Connection con, Class<T> queryClazz, String _table) {
+		this.mappingClass = queryClazz;
+		this.conn = con;
+		this.table = _table;
+
+		Field[] fields = mappingClass.getDeclaredFields();
+
+		for (int i = 0; i < fields.length; i++) {
+			if (fields[i].isAnnotationPresent(javax.persistence.Column.class)) {
+				Field f = fields[i];
+				Column col = f.getAnnotation(javax.persistence.Column.class);
+				String colName = col.name();
+				f.setAccessible(true);
+				columns.add(new CColumn(colName, f));
+			}
+		}
+
+	}
+
+	public ArrayList<T> executeQuery() {
+		return executeQuery(null);
+	}
+
+	public ArrayList<T> executeQuery(ResultSetHandler handler) {
+
+		ArrayList<T> ret = new ArrayList<T>();
+
+		buildSqlString();
+
+		PreparedStatement pstm = null;
+		ResultSet rs = null;
+		try {
+
+			String sqlStr = sql.toString();
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sqlStr);
+			}
+
+			pstm = conn.prepareStatement(sqlStr);
+			rs = pstm.executeQuery();
+
+			if (handler != null) {
+				handler.process(rs);
+			} else {
+				while (rs.next()) {
+					T obj = mappingClass.newInstance();
+					for (int i = 0, n = columns.size(); i < n; i++) {
+						Field f = columns.get(i).getField();
+						Object o = rs.getObject(i + 1);
+						if (o != null) {
+							if (f.getType() == java.lang.String.class) {
+								f.set(obj, o.toString());
+							} else {
+								f.set(obj, o);
+							}
+						}
+					}
+					ret.add(obj);
+				}
+			}
+
+		} catch (Throwable e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+			if (pstm != null) {
+				try {
+					pstm.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+		}
+
+		return ret;
+	}
+
+	private void buildSqlString() {
+		if (sql != null) {
+			return;
+		}
+
+		sql = new StringBuilder("Select ");
+
+		int idx = 0;
+		for (int i = 0, n = columns.size(); i < n; i++) {
+
+			if (idx > 0) {
+				sql.append(",");
+			}
+			sql.append(columns.get(i).getName());
+			idx++;
+
+		}
+		
+		if(groupBy != null && groupBy.length >0)
+		for (int i = 0, n = groupBy.length; i < n; i++) {
+
+			if (idx > 0) {
+				sql.append(",");
+			}
+			sql.append(groupBy[i]);
+			idx++;
+		}
+
+		sql.append(" from ").append(table);
+
+		if (criterias.size() > 0) {
+			sql.append(" where");
+			for (int i = 0; i < criterias.size(); i++) {
+				if (i > 0) {
+					sql.append(" and ");
+				}
+				sql.append(criterias.get(i).toString());
+			}
+		}
+		
+		if(groupBy != null && groupBy.length >0) {
+			sql.append(" group by ");
+			for (int i = 0; i < groupBy.length; i++) {
+				if (i > 0) {
+					sql.append(",");
+				}
+				sql.append(groupBy[i]);
+			}
+		}
+
+		if (orders.size() > 0) {
+			sql.append(" order by ");
+			for (int i = 0; i < orders.size(); i++) {
+				if (i > 0) {
+					sql.append(",");
+				}
+				sql.append(orders.get(i).toString());
+			}
+		}
+	}
+
+	private String whereSql() {
+		StringBuilder sb = new StringBuilder();
+		if (criterias.size() > 0) {
+			sb.append(" where");
+			for (int i = 0; i < criterias.size(); i++) {
+				if (i > 0) {
+					sb.append(" and ");
+				}
+				sb.append(criterias.get(i).toString());
+			}
+		}
+
+		return sb.toString();
+	}
+
+	public void addCriteria(Criteria c) {
+		criterias.add(c);
+	}
+
+	public void addOrder(Order order) {
+		this.orders.add(order);
+	}
+	
+	public void groupBy(String[] by) {
+		this.groupBy = by;
+	}
+
+	public int executeUpdate(Object object, String[] properties) {
+		PreparedStatement pstm = null;
+		try {
+
+			ArrayList<CColumn> list = new ArrayList<CColumn>();
+			Arrays.sort(properties);
+
+			for (int i = 0, n = columns.size(); i < n; i++) {
+				CColumn c = columns.get(i);
+				if (Arrays.binarySearch(properties, c.getField().getName()) != -1) {
+					list.add(c);
+				}
+			}
+
+			if (list.size() == 0) {
+				if (log.isWarnEnabled()) {
+					log.warn("Object :" + object + " not has properties in"
+							+ properties);
+				}
+				return 0;
+			}
+
+			String sqlStr = updateSql(list) + this.whereSql();
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sqlStr);
+			}
+			pstm = conn.prepareStatement(sqlStr);
+
+			for (int i = 0, n = list.size(); i < n; i++) {
+				CColumn c = list.get(i);
+				Object obj = c.getField().get(object);
+				pstm.setObject(i + 1, obj);
+			}
+
+			return pstm.executeUpdate();
+
+		} catch (Throwable e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		} finally {
+
+			if (pstm != null) {
+				try {
+					pstm.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+		}
+		return 0;
+	}
+	
+	public int executeUpdate(Object object) {
+		PreparedStatement pstm = null;
+		try {
+
+			ArrayList<CColumn> list = new ArrayList<CColumn>();
+		
+
+			
+			ArrayList<CColumn> where = new ArrayList<CColumn>();
+			for (int i = 0, n = columns.size(); i < n; i++) {
+				CColumn c = columns.get(i);
+				if (c.getField().isAnnotationPresent(Id.class)) {
+					where.add(c);
+				} else {
+					list.add(c);
+				}
+
+			}
+			
+
+			String sqlStr = updateByIdSql(list,where);
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sqlStr);
+			}
+			pstm = conn.prepareStatement(sqlStr);
+			
+			list.addAll(where);
+			for (int i = 0, n = list.size(); i < n; i++) {
+				CColumn c = list.get(i);
+				Object obj = c.getField().get(object);
+				pstm.setObject(i + 1, obj);
+			}
+			
+
+			return pstm.executeUpdate();
+
+		} catch (Throwable e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		} finally {
+
+			if (pstm != null) {
+				try {
+					pstm.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+		}
+		return 0;
+	}
+
+	public int delete() {
+		PreparedStatement pstm = null;
+		try {
+
+			String sqlStr = deleteSql();
+			pstm = conn.prepareStatement(sqlStr);
+
+			return pstm.executeUpdate();
+
+		} catch (Throwable e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		} finally {
+
+			if (pstm != null) {
+				try {
+					pstm.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+		}
+		return 0;
+	}
+
+	public int delete(Object object) {
+		PreparedStatement pstm = null;
+		try {
+
+			ArrayList<CColumn> list = new ArrayList<CColumn>();
+			for (int i = 0, n = columns.size(); i < n; i++) {
+				CColumn c = columns.get(i);
+				if (c.getField().isAnnotationPresent(Id.class)) {
+					list.add(c);
+				}
+
+			}
+			String sqlStr = deleteByIdSql(list);
+			pstm = conn.prepareStatement(sqlStr);
+			for (int i = 0, n = list.size(); i < n; i++) {
+				CColumn c = list.get(i);
+				Object obj = c.getField().get(object);
+				pstm.setObject(i + 1, obj);
+			}
+			return pstm.executeUpdate();
+
+		} catch (Throwable e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+		} finally {
+
+			if (pstm != null) {
+				try {
+					pstm.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+		}
+		return 0;
+	}
+
+	public void saveNewObject(Object object) {
+		saveNewObject(new Object[] { object });
+	}
+
+	public void saveNewObject(Object[] insertList) {
+
+		PreparedStatement pstm = null;
+
+		try {
+
+			if (insertList == null || insertList.length == 0
+					|| insertList[0] == null) {
+				return;
+			}
+
+			ArrayList<CColumn> list = new ArrayList<CColumn>();
+			for (int i = 0, n = columns.size(); i < n; i++) {
+				CColumn c = columns.get(i);
+				Object obj;
+
+				obj = c.getField().get(insertList[0]);
+				if (obj != null) {
+					list.add(c);
+				}
+			}
+
+			String sqlStr = insertSql(list);
+
+			if (log.isDebugEnabled()) {
+				log.debug("sql=" + sqlStr);
+			}
+
+			pstm = conn.prepareStatement(sqlStr);
+			for (Object object : insertList) {
+				for (int i = 0, n = list.size(); i < n; i++) {
+					CColumn c = list.get(i);
+					Object obj = c.getField().get(object);
+					pstm.setObject(i + 1, obj);
+				}
+				pstm.execute();
+			}
+
+		} catch (Throwable e) {
+			if (log.isErrorEnabled()) {
+				log.error("Execute Error.", e);
+			}
+			throw new RuntimeException();
+		} finally {
+
+			if (pstm != null) {
+				try {
+					pstm.close();
+				} catch (SQLException e) {
+					log.error(e);
+				}
+			}
+
+		}
+
+	}
+
+	private String updateSql(ArrayList<CColumn> updtcols) {
+		Table table = mappingClass.getAnnotation(Table.class);
+		StringBuilder sb = new StringBuilder("update ");
+		sb.append(table.name()).append(" set ");
+		for (int i = 0, n = updtcols.size(); i < n; i++) {
+			if (i == 0) {
+				sb.append(updtcols.get(i).getName()).append("= ?");
+			} else {
+				sb.append(",").append(updtcols.get(i).getName()).append("= ?");
+			}
+
+		}
+
+		return sb.toString();
+	}
+
+	private String deleteSql() {
+		Table table = mappingClass.getAnnotation(Table.class);
+		StringBuilder sb = new StringBuilder("delete from ");
+		sb.append(table.name()).append(this.whereSql());
+
+		return sb.toString();
+	}
+
+	private String deleteByIdSql(ArrayList<CColumn> columns) {
+		Table table = mappingClass.getAnnotation(Table.class);
+		StringBuilder sb = new StringBuilder("delete from ");
+		sb.append(table.name()).append(" where ");
+
+		for (int i = 0, n = columns.size(); i < n; i++) {
+			if (i == 0) {
+				sb.append(columns.get(i).getName()).append("=?");
+			} else {
+				sb.append(" and ").append(columns.get(i).getName())
+						.append("=?");
+			}
+
+		}
+
+		String sqlStr = sb.toString();
+		if (log.isDebugEnabled()) {
+			log.debug("sql=" + sqlStr);
+		}
+
+		return sqlStr;
+	}
+	
+	private String updateByIdSql(ArrayList<CColumn> updtcols,ArrayList<CColumn> columns) {
+		Table table = mappingClass.getAnnotation(Table.class);
+		StringBuilder sb = new StringBuilder("update ");
+		sb.append(table.name()).append(" set ");
+		for (int i = 0, n = updtcols.size(); i < n; i++) {
+			if (i == 0) {
+				sb.append(updtcols.get(i).getName()).append("= ?");
+			} else {
+				sb.append(",").append(updtcols.get(i).getName()).append("= ?");
+			}
+
+		}
+		
+		if(columns.size() >0) {
+		sb.append(" where ");
+
+		for (int i = 0, n = columns.size(); i < n; i++) {
+			if (i == 0) {
+				sb.append(columns.get(i).getName()).append("=?");
+			} else {
+				sb.append(" and ").append(columns.get(i).getName())
+						.append("=?");
+			}
+
+		}
+		}
+
+		String sqlStr = sb.toString();
+		if (log.isDebugEnabled()) {
+			log.debug("sql=" + sqlStr);
+		}
+
+		return sqlStr;
+	}
+
+	private String insertSql(ArrayList<CColumn> columns) {
+		Table table = mappingClass.getAnnotation(Table.class);
+		StringBuilder sb = new StringBuilder("insert into ");
+		sb.append(table.name()).append("(");
+		StringBuilder values = new StringBuilder(") values(");
+
+		for (int i = 0, n = columns.size(); i < n; i++) {
+			if (i == 0) {
+				sb.append(columns.get(i).getName());
+				values.append("?");
+			} else {
+				sb.append(",").append(columns.get(i).getName());
+				values.append(",?");
+			}
+
+		}
+
+		values.append(")");
+		String sqlStr = sb.append(values).toString();
+		if (log.isDebugEnabled()) {
+			log.debug("sql=" + sqlStr);
+		}
+
+		return sqlStr;
+	}
+
+}

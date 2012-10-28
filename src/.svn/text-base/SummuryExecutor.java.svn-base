@@ -1,0 +1,114 @@
+package cn.gov.cbrc.db;
+
+import java.lang.reflect.Field;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import javax.persistence.Column;
+
+import cn.gov.cbrc.wh.log.Log;
+import cn.gov.cbrc.wh.log.LogFactory;
+
+
+public class SummuryExecutor {
+	final private static Log log = LogFactory.getLog(SummuryExecutor.class);
+	private String[] groupBy;
+	private Criteria where;
+
+	public SummuryExecutor() {
+	}
+
+	public <T> SummaryResult<T> run(final Class<T> clazz) {
+
+		Session session = StoreManager.openSession();
+		final SummaryResult<T> sr = new SummaryResult<T>();
+		try {
+
+			Query<T> q = session.createQuery(clazz);
+			if (where != null) {
+				q.addCriteria(where);
+			}
+
+			if (groupBy != null && groupBy.length > 0) {
+				q.groupBy(groupBy);
+				q.executeQuery(new ResultSetHandler() {
+
+					public int process(ResultSet rs) throws SQLException {
+						try {
+							final ArrayList<CColumn> columns = new ArrayList<CColumn>();
+							Field[] fields = clazz.getDeclaredFields();
+
+							for (int i = 0; i < fields.length; i++) {
+								if (fields[i]
+										.isAnnotationPresent(javax.persistence.Column.class)) {
+									Field f = fields[i];
+									Column col = f
+											.getAnnotation(javax.persistence.Column.class);
+									String colName = col.name();
+									f.setAccessible(true);
+									columns.add(new CColumn(colName, f));
+
+								}
+							}
+
+							while (rs.next()) {
+								T obj = clazz.newInstance();
+								int i = 0;
+								for (int n = columns.size(); i < n; i++) {
+									Field f = columns.get(i).getField();
+									Object o = rs.getObject(i + 1);
+									if (o != null) {
+										if (f.getType() == java.lang.String.class) {
+											f.set(obj, o.toString());
+										} else {
+											f.set(obj, o);
+										}
+									}
+								}
+
+								Demension[] dms = new Demension[groupBy.length];
+								int k = 0;
+								Demension parent = null;
+								for (String col : groupBy) {
+									Object o = rs.getObject(++i);
+									Demension dm = new Demension(parent,col,
+											o == null ? null : o.toString());
+									dms[k++] = dm;
+									parent = dm;
+								}
+
+								sr.add(dms, obj);
+							}
+						} catch (Exception e) {
+							log.error("Process result set error!",e);
+						}
+						return 0;
+
+					}
+				});
+
+			} else {
+				ArrayList<T> ret = q.executeQuery();
+				for (T obj : ret) {
+					sr.add(null, obj);
+				}
+			}
+
+			return sr;
+		} finally {
+			StoreManager.closeSession(session);
+		}
+
+	}
+
+	public void where(Criteria criteria) {
+		this.where = criteria;
+	}
+
+	public void groupBy(String[] _by) {
+		this.groupBy = _by;
+
+	}
+
+}

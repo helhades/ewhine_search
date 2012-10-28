@@ -1,0 +1,118 @@
+package cn.gov.cbrc.db;
+
+import cn.gov.cbrc.db.Criteria;
+
+public class Restrictions {
+
+	public static Criteria like(String propertyName, String value) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append(" like '");
+		sb.append(value);
+		sb.append("'");
+		return new CriteriaSimple(sb.toString());
+	}
+	public static Criteria notlike(String propertyName, String value) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append(" not like '");
+		sb.append(value);
+		sb.append("'");
+		return new CriteriaSimple(sb.toString());
+	}
+	
+	public static Criteria lt(String propertyName, String value) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append("<'");
+		sb.append(value);
+		sb.append("'");
+		return new CriteriaSimple(sb.toString());
+	}
+	public static Criteria gt(String propertyName, String value) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append(">'");
+		sb.append(value);
+		sb.append("'");
+		return new CriteriaSimple(sb.toString());
+	}
+
+	public static Criteria eq(String propertyName, String value) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append("='");
+		sb.append(value);
+		sb.append("'");
+		return new CriteriaSimple(sb.toString());
+	}
+	
+	public static Criteria sqlExp(String sql) {		
+		return new CriteriaSimple(sql);
+	}
+
+	public static Criteria notEquals(String propertyName, String value) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append("!='");
+		sb.append(value);
+		sb.append("'");
+		return new CriteriaSimple(sb.toString());
+	}
+	
+	public static Criteria between(String propertyName, String min, String max) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append(" between '");
+		sb.append(min);
+		sb.append("' and '");
+		sb.append(max);
+		sb.append("'");
+		return new CriteriaSimple(sb.toString());
+	}
+
+	public static Criteria or(Criteria a, Criteria b) {
+
+		return new CriteriaAndOr("or", a, b);
+	}
+
+	public static Criteria and(Criteria a, Criteria b) {
+
+		return new CriteriaAndOr("and", a, b);
+	}
+
+	public static Criteria isNotNull(String propertyName) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append(" is not null");
+		return new CriteriaSimple(sb.toString());
+	}
+	
+	public static Criteria isNull(String propertyName) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append(" is null");
+		return new CriteriaSimple(sb.toString());
+	}
+	
+	public static Criteria in(String propertyName , String[] value) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append(" in(");
+		for(int i = 0 ; i < value.length ; i++){
+			sb.append((i+1)== value.length? value: value+",");
+		}
+		sb.append(") ");
+		return new CriteriaSimple(sb.toString());
+	}
+	
+	public static Criteria in(String propertyName , String sql) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(propertyName);
+		sb.append(" in(");
+		sb.append(sql);
+		sb.append(") ");
+		return new CriteriaSimple(sb.toString());
+	}
+
+}

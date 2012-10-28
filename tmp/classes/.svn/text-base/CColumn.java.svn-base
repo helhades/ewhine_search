@@ -1,0 +1,46 @@
+package cn.gov.cbrc.db;
+
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.HashMap;
+
+public class CColumn {
+
+	private static HashMap<Class<?>, Integer> typeMap = new HashMap<Class<?>, Integer>();
+	static {
+		typeMap.put(Integer.class, Types.INTEGER);
+		typeMap.put(String.class, Types.VARCHAR);
+		typeMap.put(Timestamp.class, Types.TIMESTAMP);
+		typeMap.put(BigDecimal.class, Types.NUMERIC);
+		typeMap.put(Double.class, Types.DOUBLE);
+	}
+	private String name;
+	private Field field;
+
+	public CColumn(String name, Field f) {
+		this.name = name;
+		this.field = f;
+	}
+
+	public int sqlType() {
+		int type = typeMap.get(field.getDeclaringClass());
+		return type;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public Field getField() {
+		return field;
+	}
+	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "Column[name:" + name+",field:" + field+"]";
+	}
+
+}

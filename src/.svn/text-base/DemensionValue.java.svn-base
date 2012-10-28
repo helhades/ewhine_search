@@ -1,0 +1,63 @@
+package cn.gov.cbrc.db;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class DemensionValue<T> {
+
+	Demension dm;
+	ArrayList<T> values = new ArrayList<T>();
+	HashMap<Demension, DemensionValue<T>> child = new HashMap<Demension, DemensionValue<T>>();
+
+	public DemensionValue() {
+		
+	}
+
+	public DemensionValue(Demension _dm) {
+		this.dm = _dm;
+	}
+
+	public void addValue(T value) {
+		values.add(value);
+	}
+
+	public DemensionValue<T> getChild(Demension _dm) {
+		DemensionValue<T> dmV = child.get(_dm);
+		if (dmV == null) {
+			dmV = new DemensionValue<T>(_dm);
+			child.put(_dm, dmV);
+		}
+
+		return dmV;
+	}
+
+	public ArrayList<T> listValues(Demension[] dms) {
+
+		if (dms == null) {
+			return values;
+		} else {
+			DemensionValue<T> dmV = this;
+			for (Demension d : dms) {
+				dmV = dmV.getChild(d);
+			}
+			return dmV.listValues(null);
+		}
+
+	}
+
+	public void addValue(Demension[] dm, T v) {
+
+		addValue(v);
+		
+		if (dm != null) {
+			DemensionValue<T> dmV = this;
+			for (Demension d : dm) {
+				dmV = dmV.getChild(d);
+				dmV.addValue(v);
+			}
+
+		}
+
+	}
+
+}
