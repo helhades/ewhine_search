@@ -1,6 +1,0 @@
-package cn.gov.cbrc.db;
-
-public interface Criteria {
-	
-	public void addCriteria(Criteria c);
-}

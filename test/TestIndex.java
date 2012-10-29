@@ -16,7 +16,6 @@ public class TestIndex {
 		index_service.start();
 		index_service.indexDocument(dm);
 		index_service.stop();
-		
 
 	}
 
