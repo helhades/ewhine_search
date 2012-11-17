@@ -3,9 +3,9 @@ package com.ewhine.search;
 import java.io.IOException;
 import java.util.List;
 
-import org.ansj.lucene3.AnsjAnalysis;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
+import org.wltea.analyzer.lucene.IKAnalyzer;
 
 import proj.zoie.api.IndexReaderFactory;
 import proj.zoie.api.ZoieIndexReader;
@@ -26,14 +26,14 @@ public class EwhineIndexReaderFactory implements IndexReaderFactory<ZoieIndexRea
 
 	@Override
 	public Analyzer getAnalyzer() {
-		AnsjAnalysis analyzer = new AnsjAnalysis(false);
+		IKAnalyzer analyzer = new IKAnalyzer();
 		//StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_35);
 		return analyzer;
 	}
 
 	@Override
 	public void returnIndexReaders(List<ZoieIndexReader<IndexReader>> r) {
-		// TODO Auto-generated method stub
+		
 		indexService.returnIndexReaders(r);
 	}
 

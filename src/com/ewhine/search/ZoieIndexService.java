@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
+import org.wltea.analyzer.lucene.IKAnalyzer;
 
 import proj.zoie.api.DataConsumer.DataEvent;
 import proj.zoie.api.ZoieException;
@@ -14,7 +15,6 @@ import proj.zoie.api.ZoieIndexReader;
 import proj.zoie.impl.indexing.ZoieConfig;
 import proj.zoie.impl.indexing.ZoieSystem;
 
-import com.ewhine.model.DocumentPackage;
 import com.ewhine.redis.DocumentMessage;
 
 public class ZoieIndexService {
@@ -44,6 +44,8 @@ public class ZoieIndexService {
 		File idxDir = new File("indexs");
 
 		ZoieConfig zConfig = new ZoieConfig();
+		IKAnalyzer analyzer = new IKAnalyzer();
+		zConfig.setAnalyzer(analyzer);
 
 		zoie = ZoieSystem.buildDefaultInstance(idxDir, // index direcotry
 				new DataDocumentInterpreter(), zConfig); // true for realtime

@@ -3,4 +3,4 @@
 /logs/*
 /indexs/*
 /tmp/**.*
-/classes/*
+/classes/**.*

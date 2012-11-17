@@ -8,6 +8,7 @@ public class TestIndex {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		
 		DocumentMessage dm = new DocumentMessage();
 		dm.setNetwork_id(1);
 		dm.setData_type(1);

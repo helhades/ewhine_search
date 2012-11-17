@@ -63,7 +63,7 @@ public class IndexServer {
 		};
 
 		this.tt = new TimerTask(1000, run, "QueuePicker");
-		tt.start();
+		//tt.start();
 		
 	}
 

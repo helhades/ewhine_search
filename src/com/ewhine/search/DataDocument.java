@@ -1,6 +1,5 @@
 package com.ewhine.search;
 
-import org.ansj.lucene3.AnsjAnalysis;
 import org.apache.lucene.document.Document;
 
 import proj.zoie.api.indexing.ZoieIndexable;
@@ -44,7 +43,7 @@ public class DataDocument implements ZoieIndexable{
 
 	@Override
 	public IndexingReq[] buildIndexingReqs() {
-		return new IndexingReq[]{new IndexingReq(doc,new AnsjAnalysis(false))};
+		return new IndexingReq[]{new IndexingReq(doc)};
 	}
 
 	@Override

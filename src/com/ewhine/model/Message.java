@@ -70,6 +70,7 @@ public class Message {
 		NumericField f_type = new NumericField("type", Store.YES, true);
 		f_type.setIntValue(qm.getData_type());
 		d.add(f_type);
+		
 
 		
 		long id = qm.getObject_id();
@@ -80,10 +81,11 @@ public class Message {
 				Store.YES, Index.ANALYZED);
 		d.add(f_content);
 		// group_id
-		NumericField f_group_id = new NumericField("network_id", Store.YES,
+		NumericField f_group_id = new NumericField("group_id", Store.YES,
 				true);
 		f_group_id.setLongValue(msg.group_id);
 		d.add(f_group_id);
+		
 		
 		
 		return d;
