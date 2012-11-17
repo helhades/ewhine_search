@@ -2,5 +2,5 @@
 *.log
 /logs/*
 /indexs/*
-/tmp/**.*
-/classes/**.*
+/tmp/*
+/classes/*
