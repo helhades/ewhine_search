@@ -29,9 +29,10 @@ public class SecurityFilter extends Filter {
 	@Override
 	public DocIdSet getDocIdSet(IndexReader reader) throws IOException {
 		OpenBitSet bits = new OpenBitSet(reader.maxDoc());
+		//System.out.println("get doc group:" + group.getId());
 
 		for (Group group : groups) {
-			System.out.println("get doc group:" + group.getId());
+			
 			TermDocs termDocs = reader.termDocs(new Term("group_id", NumericUtils
 					.longToPrefixCoded(group.getId())));
 			if (group.getId()==8) {

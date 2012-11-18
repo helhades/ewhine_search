@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.lucene.queryParser.ParseException;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import proj.zoie.api.ZoieException;
 import cn.gov.cbrc.wh.log.Log;
@@ -13,6 +12,7 @@ import cn.gov.cbrc.wh.log.LogFactory;
 import com.ewhine.redis.DocumentMessage;
 import com.ewhine.redis.RedisQueue;
 import com.ewhine.util.TimerTask;
+import com.google.gson.Gson;
 
 public class IndexServer {
 
@@ -35,19 +35,23 @@ public class IndexServer {
 			@Override
 			public void run() {
 				byte[] q_msg = null;
-				ObjectMapper mapper = new ObjectMapper();
+				Gson gson = new Gson();
 				ArrayList<DocumentMessage> recieved = new ArrayList<DocumentMessage>();
 				while ((q_msg = queue.readMessage()) != null) {
 					try {
 
-						DocumentMessage doc = mapper.readValue(new String(q_msg),
+						DocumentMessage doc = gson.fromJson(new String(q_msg,"utf-8"),
 								DocumentMessage.class);
-						System.out.println("doc:" + doc);
 						
+						if(log.isDebugEnabled()) {
+							log.debug("Readed a doc:" + doc );
+						}
 						recieved.add(doc);
 
 					} catch (IOException e) {
-						e.printStackTrace();
+						if(log.isErrorEnabled()) {
+							log.error("Read message error.",e);
+						}
 					}
 					
 					if (recieved.size()>100) break; //try this batch first.

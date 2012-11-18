@@ -9,8 +9,7 @@
 <h1>Search</h1>
 <form action="/search" method="GET">
 <input type="text" name="user_id" value="$user_id"/>
-<input type="text" name="network_id" value="$network_id" />
-<input value="$q" title="搜索" size="41" type="text" autocomplete="off" id="lst-ib" name="q" maxlength="2048" dir="ltr" spellcheck="false">
+<input value="$q" title="" size="41" type="text" autocomplete="off" id="lst-ib" name="q" maxlength="2048" dir="ltr" spellcheck="false">
 <input value="搜索" name="btnK" type="submit">
 </form>
 #if($result)

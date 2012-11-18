@@ -17,6 +17,10 @@ public class User {
 	@Column(name = "network_id")
 	long network_id;
 	
+	public long getNetwork_id() {
+		return network_id;
+	}
+	
 	public List<Group> groups() {
 		TableClass<Group> groupTable = StoreManager.open(Group.class);
 		List<Group> ret = groupTable.find_by_sql("select group_id as id from groups_users where user_id = ?", id);

@@ -5,6 +5,10 @@ public class DocumentMessage {
 	long network_id;
 	int data_type;
 	long object_id;
+	String title;
+	String content;
+	long created_at;
+	long updated_at;
 	
 	public DocumentMessage() {
 		
@@ -30,7 +34,7 @@ public class DocumentMessage {
 	}
 	public String toString() {
 		
-		return "msg[network:"+ network_id + ",data_type:" + data_type+ ",object_id:" + object_id+"]";
+		return "msg[network:"+ network_id + ",data_type:" + data_type+ ",object_id:" + object_id+",plain:"+content+"]";
 	}
 	
 
