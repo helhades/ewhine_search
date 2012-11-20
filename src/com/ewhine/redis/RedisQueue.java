@@ -44,15 +44,13 @@ public class RedisQueue {
 
 		List<byte[]> collection = new ArrayList<byte[]>();
 		for (int i = 0; i < 10; i++) {
-			log.debug("entry the block method now ...");
+
 			List<byte[]> results = jedis.blpop(timeout, queueName.getBytes());
 			if (results == null || results.isEmpty()) {
-				log.debug("with timeout : " + timeout
-						+ " get empty list. will continue now ...");
 				return collection;
 			}
 
-			log.debug("with timeout : " + timeout + " get not empty list : ");
+			
 			if (results != null && results.size() == 2) {
 				collection.add(results.get(1));
 			} else {

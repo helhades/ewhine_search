@@ -15,9 +15,15 @@ import proj.zoie.api.ZoieIndexReader;
 import proj.zoie.impl.indexing.ZoieConfig;
 import proj.zoie.impl.indexing.ZoieSystem;
 
+import cn.gov.cbrc.wh.log.Log;
+import cn.gov.cbrc.wh.log.LogFactory;
+
 import com.ewhine.redis.DocumentMessage;
 
 public class ZoieIndexService {
+
+	final private static Log log = LogFactory.getLog(ZoieIndexService.class);
+
 	ZoieSystem<IndexReader, DataDocument> zoie = null;
 
 	public ZoieIndexService() {
@@ -28,10 +34,12 @@ public class ZoieIndexService {
 		try {
 			return zoie.getIndexReaders();
 		} catch (IOException e) {
-
-			e.printStackTrace();
-			return null;
+			if (log.isErrorEnabled()) {
+				log.error("Get index readers error.", e);
+			}
 		}
+
+		return null;
 
 	}
 
@@ -62,23 +70,25 @@ public class ZoieIndexService {
 
 	}
 
-	public void indexDocument(DocumentMessage docPackage) {
+	public void indexDocument(DocumentMessage docMessage) {
 		Collection<DataEvent<DataDocument>> eventList = new ArrayList<DataEvent<DataDocument>>(
 				1);
 
 		DataEvent<DataDocument> de = new DataEvent<DataDocument>(
-				new DataDocument(docPackage), "1");
+				new DataDocument(docMessage), "1");
 		eventList.add(de);
 
 		try {
 			zoie.consume(eventList);
 			zoie.flushEvents(10000);
 		} catch (ZoieException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if (log.isErrorEnabled()) {
+				log.error("Index document message:" + docMessage + "error.", e);
+			}
 		}
-
-		System.out.println("Document Package:" + docPackage + " indexed!");
+		if (log.isInfoEnabled()) {
+			log.info("Document Package:" + docMessage + " indexed!");
+		}
 
 	}
 
@@ -97,14 +107,15 @@ public class ZoieIndexService {
 			zoie.consume(eventList);
 			zoie.flushEvents(10000);
 		} catch (ZoieException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if (log.isErrorEnabled()) {
+				log.error("Index document messages error.", e);
+			}
 		}
 
 	}
 
 	public void returnIndexReaders(List<ZoieIndexReader<IndexReader>> readerList) {
-		
+
 		if (zoie != null) {
 			zoie.returnIndexReaders(readerList);
 		}

@@ -16,7 +16,7 @@
 		</layout>
 	</appender>
 	<logger name="com.ewhine">
-		<level value="DEBUG" />
+		<level value="INFO" />
 	</logger>
 	
 	<root>

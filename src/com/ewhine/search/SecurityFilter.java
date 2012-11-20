@@ -32,12 +32,8 @@ public class SecurityFilter extends Filter {
 		//System.out.println("get doc group:" + group.getId());
 
 		for (Group group : groups) {
-			
-			TermDocs termDocs = reader.termDocs(new Term("group_id", NumericUtils
+			TermDocs termDocs = reader.termDocs(new Term("g_id", NumericUtils
 					.longToPrefixCoded(group.getId())));
-			if (group.getId()==8) {
-				
-			}
 			while(termDocs.next()) {
 				bits.set(termDocs.doc());
 			}

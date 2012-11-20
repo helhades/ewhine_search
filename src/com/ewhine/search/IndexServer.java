@@ -18,7 +18,7 @@ public class IndexServer {
 
 	final private static Log log = LogFactory.getLog(IndexServer.class);
 	private ZoieIndexService indexService = null;
-	
+
 	private TimerTask tt = null;
 
 	public IndexServer(ZoieIndexService indexService) {
@@ -40,24 +40,28 @@ public class IndexServer {
 				while ((q_msg = queue.readMessage()) != null) {
 					try {
 
-						DocumentMessage doc = gson.fromJson(new String(q_msg,"utf-8"),
-								DocumentMessage.class);
-						
-						if(log.isDebugEnabled()) {
-							log.debug("Readed a doc:" + doc );
+						DocumentMessage doc = gson.fromJson(new String(q_msg,
+								"utf-8"), DocumentMessage.class);
+
+						if (log.isDebugEnabled()) {
+							log.debug("Readed a doc:" + doc);
 						}
 						recieved.add(doc);
 
 					} catch (IOException e) {
-						if(log.isErrorEnabled()) {
-							log.error("Read message error.",e);
+						if (log.isErrorEnabled()) {
+							log.error("Read message error.", e);
 						}
 					}
-					
-					if (recieved.size()>100) break; //try this batch first.
+
+					if (recieved.size() > 10) {
+						break; // try this batch first.
+					}
 				}
-				if(log.isInfoEnabled()) {
-					log.info("Read:" + recieved.size() + " document messages for indexing...");
+				int n = recieved.size();
+				if (n > 0 && log.isInfoEnabled()) {
+					log.info("Read:" + recieved.size()
+							+ " document messages for indexing...");
 				}
 
 				indexService.indexDocument(recieved);
@@ -67,8 +71,8 @@ public class IndexServer {
 		};
 
 		this.tt = new TimerTask(1000, run, "QueuePicker");
-		//tt.start();
-		
+		tt.start();
+
 	}
 
 	public void stop() {

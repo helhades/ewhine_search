@@ -16,6 +16,7 @@
 <h3>Spend:$result.time ms,Total:$result.totalDocs,March:$result.totalHits</h3>
   #foreach( $hit in $hits )
     <div>
+      <span>OID:$hit.Object_id</span></br>
       <span>Score:$hit.score</span></br>
       <span>content:$hit.highlightContent</span></br>
     </div>

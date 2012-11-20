@@ -20,12 +20,24 @@ import com.ewhine.redis.DocumentMessage;
 
 public class Message {
 	public static final int type = 1;
-	@Column(name = "rich")
+	@Column(name = "plain")
 	String rich;
 	@Column(name = "id")
 	long id;
 	@Column(name = "group_id")
 	long group_id;
+	
+	public long getGroup_id() {
+		return group_id;
+	}
+	
+	public long getId() {
+		return id;
+	}
+	
+	public String getRich() {
+		return rich;
+	}
 	
 	
 	@Override
@@ -65,7 +77,6 @@ public class Message {
 		d.add(f_network_id);
 		
 		
-
 		// data_type
 		NumericField f_type = new NumericField("type", Store.YES, true);
 		f_type.setIntValue(qm.getData_type());
@@ -81,11 +92,17 @@ public class Message {
 				Store.YES, Index.ANALYZED);
 		d.add(f_content);
 		// group_id
-		NumericField f_group_id = new NumericField("group_id", Store.YES,
+		NumericField f_group_id = new NumericField("g_id", Store.YES,
 				true);
 		f_group_id.setLongValue(msg.group_id);
 		d.add(f_group_id);
 		
+		NumericField f_object_id = new NumericField("o_id", Store.YES,
+				true);
+		
+		f_object_id.setLongValue(msg.id);
+		d.add(f_object_id);
+
 		
 		
 		return d;

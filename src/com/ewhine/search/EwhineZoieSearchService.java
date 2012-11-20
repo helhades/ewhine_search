@@ -130,10 +130,16 @@ public class EwhineZoieSearchService {
 				
 				SearchHitItem hit = new SearchHitItem();
 				hit.setScore(scoreDoc.score);
+				
 				int docid = scoreDoc.doc;
 
 				Document doc = multiReader.document(docid);
 				String content = doc.get("content");
+				hit.setObject_id(Long.valueOf(doc.get("o_id")));
+				hit.setObject_type(Integer.valueOf(doc.get("type")));
+				hit.setCreated_at(Integer.valueOf(doc.get("created_at")));
+				hit.setUpdated_at(Integer.valueOf(doc.get("updated_at")));
+				
 				TokenStream tokenStream = analyzer.tokenStream("content",
 						new StringReader(content)); // four
 				String fragments = hl.getBestFragments(tokenStream, content,

@@ -107,9 +107,8 @@ public class ZoieServiceServlet extends HttpServlet {
 			response.setBufferSize(8192);
 			
 			PrintWriter out = response.getWriter();
-
 			Gson gson = new GsonBuilder().setFieldNamingPolicy(
-					FieldNamingPolicy.UPPER_CAMEL_CASE).create();
+					FieldNamingPolicy.LOWER_CASE_WITH_DASHES).create();
 			out.println(gson.toJson(result));
 			out.flush();
 			out.close();
