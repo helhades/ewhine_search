@@ -43,7 +43,7 @@ public class RedisQueue {
 	public List<byte[]> popMessage() {
 
 		List<byte[]> collection = new ArrayList<byte[]>();
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 20; i++) {
 
 			List<byte[]> results = jedis.blpop(timeout, queueName.getBytes());
 			if (results == null || results.isEmpty()) {

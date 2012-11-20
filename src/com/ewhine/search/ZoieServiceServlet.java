@@ -61,8 +61,14 @@ public class ZoieServiceServlet extends HttpServlet {
 
 			Velocity.init(p);
 		} catch (Exception e) {
-			System.out.println("Problem initializing Velocity : " + e);
+			if (log.isErrorEnabled()) {
+				log.error("Problem initializing Velocity.", e);
+			}		
 			return;
+		}
+		
+		if (log.isInfoEnabled()) {
+			
 		}
 
 		System.out.println("index server is starting.");

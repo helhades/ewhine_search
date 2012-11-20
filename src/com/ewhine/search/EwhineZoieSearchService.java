@@ -82,11 +82,9 @@ public class EwhineZoieSearchService {
 				qparser.setPhraseSlop(1);
 
 				q = qparser.parse(queryString);
-				System.out.println("pared:" + q);
-				
 				if (log.isInfoEnabled()) {
-					log.info("Query pared:" + user_id + ",Network:" + network_id
-							+ ",Query string:" + queryString);
+					log.info("Query user_id:" + user_id + ",Network:" + network_id
+							+ ",q paraed:" + q);
 				}
 
 			}
@@ -136,6 +134,7 @@ public class EwhineZoieSearchService {
 				Document doc = multiReader.document(docid);
 				String content = doc.get("content");
 				hit.setObject_id(Long.valueOf(doc.get("o_id")));
+				hit.setThread_id(Long.valueOf(doc.get("thread_id")));
 				hit.setObject_type(Integer.valueOf(doc.get("type")));
 				hit.setCreated_at(Integer.valueOf(doc.get("created_at")));
 				hit.setUpdated_at(Integer.valueOf(doc.get("updated_at")));

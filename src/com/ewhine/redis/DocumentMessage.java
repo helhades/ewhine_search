@@ -17,6 +17,7 @@ public class DocumentMessage {
 	String content;
 	int created_at;
 	int updated_at;
+	long thread_id;
 
 	public DocumentMessage() {
 
@@ -117,6 +118,10 @@ public class DocumentMessage {
 		NumericField f_created_at = new NumericField("created_at", Store.YES, true);
 		f_created_at.setIntValue(created_at);
 		d.add(f_created_at);
+		
+		NumericField f_thread_id = new NumericField("thread_id", Store.YES, true);
+		f_thread_id.setLongValue(thread_id);
+		d.add(f_thread_id);
 
 		return d;
 

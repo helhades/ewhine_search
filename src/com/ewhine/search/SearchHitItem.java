@@ -16,6 +16,8 @@ public class SearchHitItem {
 	private int created_at;
 	@SerializedName("updated_at")
 	private int updated_at;
+	@SerializedName("thread_id")
+	private long thread_id;
 
 	public SearchHitItem() {
 	}
@@ -66,6 +68,10 @@ public class SearchHitItem {
 
 	public int getUpdated_at() {
 		return updated_at;
+	}
+
+	public void setThread_id(long t_id) {
+		this.thread_id = t_id;
 	}
 
 }
