@@ -15,16 +15,21 @@ import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
+import cn.gov.cbrc.wh.log.Log;
+import cn.gov.cbrc.wh.log.LogFactory;
+
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class ZoieServiceServlet extends HttpServlet {
 
+	final private static Log log = LogFactory.getLog(ZoieServiceServlet.class);
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
 	EwhineZoieSearchService searcher = null;
 	ZoieIndexService indexer = null;
 	private IndexServer indexServer;
@@ -84,19 +89,21 @@ public class ZoieServiceServlet extends HttpServlet {
 		request.setCharacterEncoding("UTF-8");
 		String queryString = request.getParameter("q");
 		String user_id = request.getParameter("user_id");
+		
 		String format = request.getParameter("format");
 
 		// set content-type header before accessing the Writer
-		
+
 		SearchResult result = null;
 		if (user_id != null && queryString != null && queryString.length() > 0) {
 			try {
-
-				result = searcher.search(user_id, queryString);
+				long u_id = Long.parseLong(user_id);
+				result = searcher.search(u_id, queryString);
 
 			} catch (Exception e) {
-
-				e.printStackTrace();
+				if (log.isErrorEnabled()) {
+					log.error("Search q:" + queryString + ",user_id:" + user_id+" error.",e);
+				}
 			}
 
 		}
@@ -105,7 +112,7 @@ public class ZoieServiceServlet extends HttpServlet {
 			response.setCharacterEncoding("UTF-8");
 			response.setContentType("application/json");
 			response.setBufferSize(8192);
-			
+
 			PrintWriter out = response.getWriter();
 			Gson gson = new GsonBuilder().setFieldNamingPolicy(
 					FieldNamingPolicy.LOWER_CASE_WITH_DASHES).create();
@@ -123,7 +130,9 @@ public class ZoieServiceServlet extends HttpServlet {
 			context.put("result", result);
 			context.put("user_id", user_id);
 			context.put("q", queryString);
-			context.put("hits", result.getHitItems());
+			if (result != null) {
+				context.put("hits", result.getHitItems());
+			}
 			search_tmpl.merge(context, out);
 			out.flush();
 			out.close();

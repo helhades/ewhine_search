@@ -8,7 +8,9 @@ import java.util.List;
 import cn.gov.cbrc.db.StoreManager;
 import cn.gov.cbrc.db.TableClass;
 import cn.gov.cbrc.db.annotation.Column;
+import cn.gov.cbrc.db.annotation.Table;
 
+@Table(name="users")
 public class User {
 	@Column(name = "name")
 	String name;
@@ -65,7 +67,7 @@ public class User {
 	}
  	
 	
-	public static User find_by_id(String id) {
+	public static User find_by_id(long id) {
 		
 		TableClass<User> userTable = StoreManager.open(User.class);
 		User user = userTable.find_by_id(id);
@@ -77,7 +79,7 @@ public class User {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		User u = User.find_by_id("1");
+		User u = User.find_by_id(1L);
 		System.out.println("user:" + u);
 		List<Group> groups = u.authorizedGroups();
 		//List<Group> groups = u.groups();

@@ -47,7 +47,7 @@ public class EwhineZoieSearchService {
 		_idxReaderFactory = idxReaderFactory;
 	}
 
-	public SearchResult search(String user_id, String queryString)
+	public SearchResult search(long user_id, String queryString)
 			throws ZoieException {
 
 		

@@ -63,7 +63,7 @@ public class IndexServer {
 					log.info("Read:" + recieved.size()
 							+ " document messages for indexing...");
 				}
-
+				
 				indexService.indexDocument(recieved);
 
 			}

@@ -1,7 +1,9 @@
 package com.ewhine.model;
 
 import cn.gov.cbrc.db.annotation.Column;
+import cn.gov.cbrc.db.annotation.Table;
 
+@Table(name="groups")
 public class Group {
 	
 	@Column(name = "id")
