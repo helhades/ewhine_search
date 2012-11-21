@@ -27,8 +27,10 @@ public class ZoieServer {
 		} else {
 			confDir = new File(confDirName);
 		}
-
-		System.out.println("using config dir: " + confDir.getAbsolutePath());
+		
+		if (log.isDebugEnabled()) {
+			log.debug("using config dir: " + confDir.getAbsolutePath());
+		}
 
 		Properties props = new Properties();
 		File serverPropFile = new File(confDir, "server.properties");
@@ -87,7 +89,6 @@ public class ZoieServer {
 		log.info("loading properties: " + props);
 		System.getProperties().putAll(props);
 
-		String indexDir = props.getProperty("index.directory");
 
 		SelectChannelConnector connector = new SelectChannelConnector();
 		int serverPort;
@@ -109,15 +110,12 @@ public class ZoieServer {
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				log.info("shutting down...");
+				
 				try {
 					server.stop();
 				} catch (Exception e) {
 					log.error(e.getMessage(), e);
-				} finally {
-					server.destroy();
-					log.info("shutdown successful");
-				}
+				} 
 			}
 		});
 
@@ -125,17 +123,13 @@ public class ZoieServer {
 			log.info("starting server ... ");
 			server.start();
 			log.info("server started.");
+			zServer = server;
+			
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
-
-		try {
-			//server.join();
-		} catch (Exception e) {
-			System.exit(100);
-		}
 		
-		zServer = server;
+		
 	}
 	
 	
@@ -145,11 +139,11 @@ public class ZoieServer {
 			log.info("shutting down...");
 			try {
 				zServer.stop();
+				log.info("shutdown successful");
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
 			} finally {
 				zServer.destroy();
-				log.info("shutdown successful");
 			}
 		}
 		

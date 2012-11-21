@@ -13,9 +13,9 @@ public class SearchHitItem {
 	@SerializedName("content")
 	private String highlightcontent;
 	@SerializedName("created_at")
-	private int created_at;
+	private String created_at;
 	@SerializedName("updated_at")
-	private int updated_at;
+	private String updated_at;
 	@SerializedName("thread_id")
 	private long thread_id;
 
@@ -54,19 +54,19 @@ public class SearchHitItem {
 		return this.highlightcontent;
 	}
 
-	public void setCreated_at(int created_at) {
+	public void setCreated_at(String created_at) {
 		this.created_at = created_at;
 	}
 
-	public int getCreated_at() {
+	public String getCreated_at() {
 		return created_at;
 	}
 
-	public void setUpdated_at(int updated_at) {
+	public void setUpdated_at(String updated_at) {
 		this.updated_at = updated_at;
 	}
 
-	public int getUpdated_at() {
+	public String getUpdated_at() {
 		return updated_at;
 	}
 

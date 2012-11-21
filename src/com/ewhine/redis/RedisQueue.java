@@ -34,9 +34,8 @@ public class RedisQueue {
 		jedis = new Jedis("localhost");
 
 		// this.clear();
-
 		// runThread.start();
-		System.out.println("start running message queue.");
+		log.info("start running message queue.");
 
 	}
 
@@ -131,7 +130,7 @@ public class RedisQueue {
 		List<byte[]> out = queue.popMessage();
 		System.out.println("out length:" + out.size());
 		try {
-			Thread.currentThread().sleep(12000);
+			Thread.sleep(12000);
 			System.out.println("Finished!");
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
