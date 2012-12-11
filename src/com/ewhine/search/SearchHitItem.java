@@ -1,17 +1,22 @@
 package com.ewhine.search;
 
+import com.ewhine.model.ObjectType;
 import com.google.gson.annotations.SerializedName;
 
 public class SearchHitItem {
 
 	@SerializedName("score")
 	float score = 0;
+	@SerializedName("doc_id")
+	private int doc_id;
 	@SerializedName("id")
 	private long object_id;
 	@SerializedName("type_id")
 	private int object_type;
 	@SerializedName("content")
 	private String highlightcontent;
+	@SerializedName("name")
+	private String name = null;
 	@SerializedName("created_at")
 	private String created_at;
 	@SerializedName("updated_at")
@@ -34,8 +39,29 @@ public class SearchHitItem {
 		this.object_type = object_type;
 	}
 
-	public int getObject_type() {
-		return object_type;
+	public String getObject_type() {
+		if (ObjectType.MESSAGE ==object_type) {
+			return "MESSAGE";
+		}
+		if (ObjectType.GROUP ==object_type) {
+			return "GROUP";
+		}
+		if (ObjectType.USER ==object_type) {
+			return "USER";
+		}
+		if (ObjectType.TAG ==object_type) {
+			return "TAG";
+		}
+		
+		return "Unkwon";
+	}
+
+	public void setDoc_id(int doc_id) {
+		this.doc_id = doc_id;
+	}
+
+	public int getDoc_id() {
+		return doc_id;
 	}
 
 	public void setScore(float score) {
@@ -72,6 +98,15 @@ public class SearchHitItem {
 
 	public void setThread_id(long t_id) {
 		this.thread_id = t_id;
+	}
+
+	public void setName(String highlightName) {
+		this.name = highlightName;
+
+	}
+	
+	public String getName() {
+		return name;
 	}
 
 }

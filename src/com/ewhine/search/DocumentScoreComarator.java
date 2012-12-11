@@ -74,7 +74,8 @@ public class DocumentScoreComarator extends FieldComparator<BigDecimal> {
 			MathContext mc = new MathContext(10);
 			BigDecimal base = new BigDecimal(passed_time + 2);
 			BigDecimal score = new BigDecimal(doc_score);
-			BigDecimal out = score.multiply(base.pow(10)).divide(base.pow(18),mc);
+			BigDecimal base_pow = base.multiply(new BigDecimal(Math.pow(base.doubleValue(), 0.8))); // b^1.8 = b*b^0.8
+			BigDecimal out = score.divide(base_pow,mc);
 			
 			return out;
 

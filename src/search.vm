@@ -15,10 +15,16 @@
 #if($result)
 <h3>Spend:$result.time ms,Total:$result.totalDocs,March:$result.totalHits</h3>
   #foreach( $hit in $hits )
-    <div>
-      <span>OID:$hit.Object_id</span></br>
+    <div style="margin-top:12px">
+      <span>object_id:$hit.Object_id</span></br>
+      <span>type:$hit.Object_type</span></br>
+      #if ($hit.name)
+      <span>name:$hit.name</span></br>
+      #end
       <span>Score:$hit.score</span></br>
+      #if($hit.highlightContent)
       <span>content:$hit.highlightContent</span></br>
+      #end
     </div>
   #end
 #end

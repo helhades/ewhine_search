@@ -48,8 +48,17 @@ public class ZoieIndexService {
 	}
 
 	public void start() {
+		
+		String index_dir = System.getProperties().getProperty("indexs.dir","indexs");
 
-		File idxDir = new File("indexs");
+		File idxDir = new File(index_dir);
+		if (!idxDir.exists()) {
+			log.error("Fatal find index directory:" + idxDir.getAbsolutePath());
+		}
+		
+		if (log.isInfoEnabled()) {
+			log.info("Starting index server,using directory:" + idxDir.getAbsolutePath());
+		}
 
 		ZoieConfig zConfig = new ZoieConfig();
 		IKAnalyzer analyzer = new IKAnalyzer();

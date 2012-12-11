@@ -16,7 +16,7 @@ public class TestAnalyzer {
 		// TODO Auto-generated method stub
 		IKAnalyzer analyzer = new IKAnalyzer();
 		
-		TokenStream ts = analyzer.tokenStream("hello", new StringReader("工作台"));
+		TokenStream ts = analyzer.tokenStream("hello", new StringReader("放在我工作台上的iphone不见了。"));
 
 		Token token;
 		try

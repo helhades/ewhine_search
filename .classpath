@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="conf"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="lib" path="lib/com.ewhine.search.jar"/>
 	<classpathentry kind="lib" path="lib/commons-collections-3.2.1.jar"/>
@@ -22,7 +23,9 @@
 	<classpathentry kind="lib" path="lib/mmseg4j-all-1.8.5-with-dic.jar"/>
 	<classpathentry kind="lib" path="lib/IKAnalyzer2012_u6.jar"/>
 	<classpathentry kind="lib" path="lib/gson-2.2.2.jar"/>
+	<classpathentry kind="lib" path="lib/pinyin4j-2.5.0.jar"/>
+	<classpathentry kind="lib" path="lib/netty-3.5.10.Final.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/cn.gov.cbrc.db.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cbrc.db.util"/>
 	<classpathentry kind="output" path="tmp/classes"/>
 </classpath>

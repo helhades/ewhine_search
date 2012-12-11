@@ -48,7 +48,9 @@ public class ZoieServer {
 			}
 		}
 
-		log.info("loaded properties: " + props);
+		if (log.isDebugEnabled()) {
+			log.debug("loaded properties: " + props);
+		}
 
 		int minThread;
 		try {

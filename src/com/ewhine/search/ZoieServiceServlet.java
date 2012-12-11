@@ -92,10 +92,11 @@ public class ZoieServiceServlet extends HttpServlet {
 
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		
+		
 		request.setCharacterEncoding("UTF-8");
 		String queryString = request.getParameter("q");
 		String user_id = request.getParameter("user_id");
-		
 		String format = request.getParameter("format");
 
 		// set content-type header before accessing the Writer

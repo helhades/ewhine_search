@@ -14,10 +14,11 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermEnum;
+import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.FieldDoc;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -52,6 +53,47 @@ public class EwhineZoieSearchService {
 		_idxReaderFactory = idxReaderFactory;
 	}
 
+	public List<Term> terms() {
+		MultiReader multiReader = null;
+		List<Term> t_list = new ArrayList<Term>();
+		try {
+			List<ZoieIndexReader<IndexReader>> readers = _idxReaderFactory
+					.getIndexReaders();
+			multiReader = new MultiReader(
+					readers.toArray(new IndexReader[readers.size()]), true);
+			for (IndexReader rd : readers) {
+				TermEnum ts = rd.terms();
+				while (ts.next()) {
+					Term term = ts.term();
+					System.out.println("term:" + term);
+				}
+			}
+
+			TermEnum tms = multiReader.terms();
+			while (tms.next()) {
+				Term term = tms.term();
+				t_list.add(term);
+			}
+
+			return t_list;
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			if (multiReader != null) {
+				try {
+					multiReader.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return t_list;
+
+	}
+
 	public SearchResult search(long user_id, String queryString)
 			throws ZoieException {
 
@@ -80,11 +122,14 @@ public class EwhineZoieSearchService {
 			} else {
 
 				Analyzer analyzer = _idxReaderFactory.getAnalyzer();
-				QueryParser qparser = new QueryParser(Version.LUCENE_35,
-						"content", analyzer);
+				QueryParser qparser = new MultiFieldQueryParser(
+						Version.LUCENE_35, new String[] { "name","keyword",
+								"description", "content" }, analyzer);
 				qparser.setPhraseSlop(1);
+				qparser.setDefaultOperator(QueryParser.AND_OPERATOR);
 
 				q = qparser.parse(queryString);
+
 				if (log.isInfoEnabled()) {
 					log.info("Query user_id:" + user_id + ",Network:"
 							+ network_id + ",q paraed:" + q);
@@ -111,8 +156,8 @@ public class EwhineZoieSearchService {
 			long start = System.currentTimeMillis();
 
 			// start a new search.
-			TopFieldDocs topDocs = searcher.search(combine_query, groupFilter, 10,
-					sort);
+			TopFieldDocs topDocs = searcher.search(combine_query, groupFilter,
+					10, sort);
 			// Explanation exp = searcher.explain(all_combin, 1);
 			// System.out.println("exp:" + exp);
 
@@ -123,43 +168,60 @@ public class EwhineZoieSearchService {
 			result.setTotalHits(topDocs.totalHits);
 
 			ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-			
 
-			//highlight the query word.
+			// highlight the query word.
 			Scorer qs = new QueryScorer(q);
 			SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(
 					"<span class=\"hl\">", "</span>");
 			Highlighter hl = new Highlighter(formatter, qs);
 			int maxNumFragmentsRequired = 20;
-			
+
 			Analyzer analyzer = _idxReaderFactory.getAnalyzer();
-			
+
 			String pattern = "yyyy-MM-dd'T'HH:mm:ss:SSSZZ";
-			
+
 			ArrayList<SearchHitItem> hitItems = new ArrayList<SearchHitItem>(
 					scoreDocs.length);
 			for (ScoreDoc scoreDoc : scoreDocs) {
 
 				SearchHitItem hit = new SearchHitItem();
-				//System.out.println("set score:" + ((FieldDoc)scoreDoc).fields[0]);
-				//hit.setScore(scoreDoc.score);
+				// System.out.println("set score:" +
+				// ((FieldDoc)scoreDoc).fields[0]);
+				// hit.setScore(scoreDoc.score);
 
 				int docid = scoreDoc.doc;
 
 				Document doc = multiReader.document(docid);
-				String content = doc.get("content");
-				hit.setObject_id(Long.valueOf(doc.get("o_id")));
-				hit.setThread_id(Long.valueOf(doc.get("thread_id")));
-				hit.setObject_type(Integer.valueOf(doc.get("type")));
-				
-				hit.setUpdated_at(DateFormatUtils.format(new Date(Long.valueOf(doc.get("created_at") )*1000L), pattern));;
-				hit.setUpdated_at(DateFormatUtils.format(new Date(Long.valueOf(doc.get("updated_at") )*1000L), pattern));;
 
-				TokenStream tokenStream = analyzer.tokenStream("content",
-						new StringReader(content)); // four
-				String fragments = hl.getBestFragments(tokenStream, content,
-						maxNumFragmentsRequired, "...");
-				hit.setHighlightContent(fragments);
+				hit.setObject_id(Long.valueOf(doc.get("o_id")));
+				if (doc.get("thread_id") != null) {
+					hit.setThread_id(Long.valueOf(doc.get("thread_id")));
+				}
+				hit.setObject_type(Integer.valueOf(doc.get("type")));
+				hit.setDoc_id(docid);
+
+				hit.setUpdated_at(DateFormatUtils.format(
+						new Date(Long.valueOf(doc.get("created_at")) * 1000L),
+						pattern));
+				hit.setUpdated_at(DateFormatUtils.format(
+						new Date(Long.valueOf(doc.get("updated_at")) * 1000L),
+						pattern));
+
+				String content = doc.get("content");
+				if (content != null) {
+					TokenStream tokenStream = analyzer.tokenStream("content",
+							new StringReader(content)); // four
+					String fragments = hl.getBestFragments(tokenStream,
+							content, maxNumFragmentsRequired, "...");
+					hit.setHighlightContent(fragments);
+				}
+
+				String name = doc.get("name");
+				
+				if (name != null) {
+					hit.setName(name);
+				}
+
 				hitItems.add(hit);
 
 			}
