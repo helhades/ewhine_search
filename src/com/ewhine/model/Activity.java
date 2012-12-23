@@ -1,6 +1,8 @@
 package com.ewhine.model;
 
 import java.sql.Timestamp;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import cn.gov.cbrc.db.StoreManager;
@@ -69,6 +71,14 @@ public class Activity {
 	public static List<Activity> find_by_user_id(long id) {
 		TableClass<Activity> tc = StoreManager.open(Activity.class);
 		List<Activity> activities = tc.where("user_id", new Long(id));
+		Collections.sort(activities, new Comparator<Activity>() {
+
+			@Override
+			public int compare(Activity a, Activity b) {
+				return a.created_at.compareTo(b.created_at);
+			}
+			
+		});
 		
 		return activities;
 	}

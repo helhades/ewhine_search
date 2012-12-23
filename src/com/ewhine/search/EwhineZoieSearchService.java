@@ -102,8 +102,7 @@ public class EwhineZoieSearchService {
 		List<Group> u_groups = user.authorizedGroups();
 
 		if (log.isInfoEnabled()) {
-			log.info("User:" + user_id + ",Network:" + network_id
-					+ ",Query string:" + queryString);
+			log.info("qid:3217,"+"uid:" + user_id + ",query:" + queryString);
 		}
 
 		SecurityFilter groupFilter = new SecurityFilter(u_groups);
@@ -123,7 +122,7 @@ public class EwhineZoieSearchService {
 
 				Analyzer analyzer = _idxReaderFactory.getAnalyzer();
 				QueryParser qparser = new MultiFieldQueryParser(
-						Version.LUCENE_35, new String[] { "name","keyword",
+						Version.LUCENE_35, new String[] { "name", "keyword",
 								"description", "content" }, analyzer);
 				qparser.setPhraseSlop(1);
 				qparser.setDefaultOperator(QueryParser.AND_OPERATOR);
@@ -149,7 +148,7 @@ public class EwhineZoieSearchService {
 					readers.toArray(new IndexReader[readers.size()]), false);
 
 			// set the sort.
-			Sort sort = new Sort(new SortField("interest_score",
+			Sort sort = new Sort(new SortField("updated_at",
 					new DocumentComparatorSource()));
 
 			searcher = new IndexSearcher(multiReader);
@@ -217,7 +216,7 @@ public class EwhineZoieSearchService {
 				}
 
 				String name = doc.get("name");
-				
+
 				if (name != null) {
 					hit.setName(name);
 				}

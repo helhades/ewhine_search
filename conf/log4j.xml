@@ -3,7 +3,7 @@
 <log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/'>
 	<appender name="myConsole" class="org.apache.log4j.ConsoleAppender">
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="[%d{HH:mm:ss,SSS\} %-5p] %c{1\} - %m%n" />
+			<param name="ConversionPattern" value="[%d{yyyy-MM-dd'T'HH:mm:ss:SSSZZ\} %-5p] %c{1\} - %m%n" />
 		</layout>    
 	</appender>
 	<appender name="file" class="org.apache.log4j.RollingFileAppender">
@@ -12,7 +12,7 @@
 		<param name="MaxFileSize" value="20000KB" />
 		<param name="MaxBackupIndex" value="5" />
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="[%d{HH:mm:ss\} %-5p] %c{1\} - %m%n" />
+			<param name="ConversionPattern" value="[%d{yyyy-MM-dd'T'HH:mm:ss:SSSZZ\} %-5p] %c{1\} - %m%n" />
 		</layout>
 	</appender>
 	<logger name="com.ewhine">

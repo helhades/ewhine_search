@@ -58,11 +58,7 @@ public class IndexServer {
 						break; // try this batch first.
 					}
 				}
-				int n = recieved.size();
-				if (n > 0 && log.isInfoEnabled()) {
-					log.info("Read:" + recieved.size()
-							+ " document messages for indexing...");
-				}
+				
 				
 				indexService.indexDocument(recieved);
 

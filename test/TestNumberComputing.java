@@ -1,7 +1,5 @@
 import java.math.BigDecimal;
 
-import com.ewhine.util.BigDecimalMath;
-
 
 public class TestNumberComputing {
 
@@ -11,7 +9,7 @@ public class TestNumberComputing {
 	public static void main(String[] args) {
 		BigDecimal base = new BigDecimal("2349003244455");
 		BigDecimal exp = new BigDecimal("1.2");
-		BigDecimal out = BigDecimalMath.pow(base, exp);
+		BigDecimal out = base.pow(1);
 		
 		System.out.println("out:" + out.toPlainString());
 

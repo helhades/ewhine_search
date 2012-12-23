@@ -20,17 +20,22 @@ targetdir=`dirname "$SCRIPT"`
 targetdir=`cd $targetdir; pwd`
 serverdir=${targetdir%/*}
 serverjar=$serverdir/server.jar
+server_temp=$serverdir/tmp
+server_logs=$serverdir/logs
+server_name="ewhine_search"
 cd $serverdir
 
 
 start()
 {
-  nohup java -Xms$min_heap_size -Xmx$max_heap_size -XX:PermSize=128m -Xloggc:gc.log -XX:+PrintGCTimeStamps -XX:-PrintGCDetails -Dfile.encoding=UTF-8 -jar $serverjar  > server.log  &
-  echo $! > service_framework.pid
+  nohup java -Xms$min_heap_size -Xmx$max_heap_size -XX:PermSize=128m -Xloggc:$server_logs/gc.log -XX:+PrintGCTimeStamps -XX:-PrintGCDetails -Dfile.encoding=UTF-8 -jar $serverjar  > $server_logs/server.log  &
+  echo $! > $server_temp/$server_name.pid
+  echo "server started!"
 }
 stop()
 {
-  kill  `cat service_framework.pid`
+  kill  `cat $server_temp/$server_name.pid`
+  echo "server stopped!"
 }
 
 case $1 in

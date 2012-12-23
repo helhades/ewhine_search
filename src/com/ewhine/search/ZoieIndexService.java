@@ -115,6 +115,11 @@ public class ZoieIndexService {
 		try {
 			zoie.consume(eventList);
 			zoie.flushEvents(10000);
+			int n = eventList.size();
+			if (n > 0 && log.isInfoEnabled()) {
+				log.info("Read:" + n
+						+ " document messages for indexing...");
+			}
 		} catch (ZoieException e) {
 			if (log.isErrorEnabled()) {
 				log.error("Index document messages error.", e);

@@ -7,10 +7,14 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -27,7 +31,7 @@ import com.ewhine.model.Message;
 public class UserProfile {
 
 	HashMap<String, KeyWord> profile_keysets = new HashMap<String, KeyWord>();
-	int keep_size = 60;
+	int keep_size = 30;
 
 	public UserProfile(List<KeyWord> keys) {
 		for (KeyWord kw : keys) {
@@ -65,17 +69,17 @@ public class UserProfile {
 		}
 		int key_count = keywords.length;
 		int t = (int) (created_at.getTime() / 3600000);
-		MathContext mc = new MathContext(10);
-		BigDecimal base = new BigDecimal(Math.pow(Math.E, 0.2));
-		BigDecimal w0 = new BigDecimal("0.5");
+		MathContext mc = new MathContext(10,RoundingMode.HALF_UP);
+		BigDecimal base = new BigDecimal(Math.pow(Math.E, 0.2),mc);
+		BigDecimal w0 = new BigDecimal("0.5",mc);
 
 		for (String k : keysets.keySet()) {
 
 			KeyWord keyword = keysets.get(k);
 
 			int freq = keyword.getFreq();
-			BigDecimal weight = w0.multiply(new BigDecimal(freq)).divide(
-					new BigDecimal(key_count), mc);
+			BigDecimal weight = w0.multiply(new BigDecimal(freq,mc)).divide(
+					new BigDecimal(key_count,mc),10, RoundingMode.HALF_UP);
 
 			if (!profile_keysets.containsKey(k)) {
 
@@ -89,23 +93,22 @@ public class UserProfile {
 				BigDecimal old_weight = old.getWeight();
 				int t0 = old.getT0();
 
-				BigDecimal out = old_weight.multiply((BigDecimal.ONE.divide(base, 10,RoundingMode.HALF_UP)).pow(t-t0)); // e 0.2
-
-				BigDecimal wt = out.add(weight);
+				BigDecimal out = old_weight.multiply((BigDecimal.ONE.divide(base, 10,RoundingMode.HALF_UP)).pow(t-t0),mc); // e 0.2
+				BigDecimal wt = out.add(weight,mc);
 
 				old.setWeight(wt);
 			}
 
-			if (k.equals("em")) {
-				System.err.println("created_at:" + created_at);
-				System.err.println("t:" + t);
-				int t0 = profile_keysets.get(k).getT0();
-				System.err.println("t0:" + profile_keysets.get(k).getT0());
-				System.err.println("ex pow10:" + base.pow(10, mc) );
-				System.err.println("ex:" + base.pow(2 * (t - t0)));
-				System.err.println("weight:"
-						+ profile_keysets.get(k).getWeight());
-			}
+//			if (k.equals("em")) {
+//				System.err.println("created_at:" + created_at);
+//				System.err.println("t:" + t);
+//				int t0 = profile_keysets.get(k).getT0();
+//				System.err.println("t0:" + profile_keysets.get(k).getT0());
+//				System.err.println("ex pow10:" + base.pow(10, mc) );
+//				System.err.println("ex:" + base.pow(2 * (t - t0)));
+//				System.err.println("weight:"
+//						+ profile_keysets.get(k).getWeight());
+//			}
 		}
 
 		if (profile_keysets.size() > keep_size) {
@@ -115,19 +118,26 @@ public class UserProfile {
 	}
 
 	private void dropLastLightWord() {
-		String dropKey = null;
-		BigDecimal minWeight = new BigDecimal(Integer.MAX_VALUE);
-		for (String k : profile_keysets.keySet()) {
-			KeyWord keyword = profile_keysets.get(k);
-			BigDecimal weight = keyword.getWeight();
-			if (weight.compareTo(minWeight) == -1) {
+		
+		int size_of_profile = profile_keysets.size();
+		int drop_size = size_of_profile - this.keep_size;
+		KeyWord[] all_sorted = new KeyWord[size_of_profile];
+		Collection<KeyWord> all = profile_keysets.values();
+		all.toArray(all_sorted);
+		Arrays.sort(all_sorted, new Comparator<KeyWord>() {
 
-				minWeight = weight;
-				dropKey = k;
+			@Override
+			public int compare(KeyWord a, KeyWord b) {
+				return a.weight.compareTo(b.weight);
 			}
+			
+		});
+		for (int i=0;i<drop_size;i++ ) {
+			profile_keysets.remove(all_sorted[i].word());
+			System.err.println("drop:" + all_sorted[i].word()+",w:" + all_sorted[i].weight);
 		}
 
-		profile_keysets.remove(dropKey);
+		
 
 	}
 
@@ -149,9 +159,6 @@ public class UserProfile {
 			while (ts.incrementToken()) {
 				String key = ts.getAttribute(CharTermAttribute.class)
 						.toString();
-				if (key.equals("em")) {
-					System.err.println("em:" + text);
-				}
 
 				KeyWord o = keys.get(key);
 				if (o == null) {
@@ -177,8 +184,16 @@ public class UserProfile {
 	public String toString() {
 
 		Collection<KeyWord> kwsets = profile_keysets.values();
-		ArrayList<KeyWord> alist = new ArrayList(kwsets);
-		Collections.sort(alist);
+		ArrayList<KeyWord> alist = new ArrayList<KeyWord>(kwsets);
+		Collections.sort(alist,new Comparator<KeyWord>() {
+
+			@Override
+			public int compare(KeyWord a, KeyWord b) {
+				// From big to small number.
+				return b.getWeight().compareTo(a.getWeight());
+			}
+			
+		});
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Size:" + profile_keysets.size());
@@ -192,17 +207,46 @@ public class UserProfile {
 	}
 
 	public static void main(String[] args) {
-		UserProfile jimrok_profile = UserProfile.find_by_user_id(1);
-		List<Activity> activities = Activity.find_by_user_id(1);
+		UserProfile herry = UserProfile.find_by_user_id(5);
+		List<Activity> activities = Activity.find_by_user_id(5);
 		int i = 0;
 		for (Activity activity : activities) {
 			i++;
-			// if (i>19) break;
+			//if (i>19) break;
+			// if (activity.getId() == 424 ||activity.getId() == 425 )
+			herry.training(activity);
+		}
+		
+		UserProfile jimrok_profile = UserProfile.find_by_user_id(1);
+		activities = Activity.find_by_user_id(1);
+		
+		for (Activity activity : activities) {
+			i++;
+			//if (i>19) break;
 			// if (activity.getId() == 424 ||activity.getId() == 425 )
 			jimrok_profile.training(activity);
 		}
+		
+		HashSet<String> keys = new HashSet<String>();
+		for (String k : herry.profile_keysets.keySet()) {
+			if (!keys.contains(k)) {
+				keys.add(k);
+			}
+		}
+		for (String k : jimrok_profile.profile_keysets.keySet()) {
+			if (!keys.contains(k)) {
+				keys.add(k);
+			}
+		}
+		for (String k : keys) {
+			KeyWord h_kw = herry.profile_keysets.get(k);
+			KeyWord j_kw = jimrok_profile.profile_keysets.get(k);
+			BigDecimal j_w = (j_kw == null ? BigDecimal.ZERO : j_kw.getWeight()) ;
+			BigDecimal h_w = (h_kw == null ? BigDecimal.ZERO : h_kw.getWeight()) ;
+			System.out.println(k+","+ h_w + "," + j_w);
+		}
 
-		System.out.println("profile:" + jimrok_profile.toString());
+		//System.out.println("profile:" + jimrok_profile.toString());
 	}
 
 }
