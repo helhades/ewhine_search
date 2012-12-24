@@ -37,13 +37,7 @@ set :copy_cache, true
 set :group_writable, false
 
 set :default_environment, {
-  'LANG' => 'zh_CN.UTF-8',
-  'RUBY_HEAP_MIN_SLOTS'=>620000,
-  'RUBY_FREE_MIN'=>200000,
-  'RUBY_HEAP_SLOTS_INCREMENT'=>250000,
-  'RUBY_HEAP_SLOTS_GROWTH_FACTOR'=>1,
-  'RUBY_GC_MALLOC_LIMIT'=>62000000,
-  'LD_PRELOAD'=>'/usr/lib/libtcmalloc_minimal.so.0'
+  'LANG' => 'zh_CN.UTF-8'
  }
 
 
@@ -53,13 +47,17 @@ default_run_options[:pty] = true
 set :deploy_to, "/home/ewhine/deploy/#{application}"
 server 'ewhine@www.gz3renxing.com', :app, :web, :db, :primary => true
 
-after "deploy:setup","deploy:file_store"
+#after "deploy:finalize_update","deploy:compile"
+namespace :bundle do
+  task :install do
+    run "echo install"
+  end
+end
 
 namespace :deploy do
 
-  task :file_store do
-    run "mkdir -p #{deploy_to}/efiles/contents"
-    run "mkdir -p #{deploy_to}/efiles/photos"
+  task :finalize_update do
+    #run "cd #{latest_release} ; ant jar"
   end
 
 end
@@ -68,33 +66,22 @@ end
 #Only support git.
 
 
-after "deploy:create_symlink", "deploy:link_file_store","deploy:copy_photos"
+#after "deploy:create_symlink", "deploy:link_file_store","deploy:copy_photos"
 before "all","deploy:stop","deploy:update","deploy:start"
-before "deploy:assets:precompile","deploy:assets:clean_assets"
-after "deploy:update", "deploy:cleanup"
+#before "deploy:assets:precompile","deploy:assets:clean_assets"
+#after "deploy:update", "deploy:cleanup"
 
-namespace :deploy do
-  task :link_file_store do
-    run "cd #{current_path} && ln -s #{deploy_to}/efiles/contents contents"
-    run "cd #{current_path} && ln -s #{deploy_to}/efiles/photos photos"
-  end
 
-  task :copy_photos do
-    run "mkdir -p #{deploy_to}/efiles/photos/none"
-    run "mkdir -p #{deploy_to}/efiles/contents/files"
-    run "cd #{current_path}/public/images && cp *.gif #{deploy_to}/efiles/photos/none"
-    run "cd #{current_path} && cp public/images/files/*.png #{deploy_to}/efiles/contents/files"
-  end
-
-end
 
 namespace :deploy do
       namespace :assets do
-        task :no_precompile, :roles => :web, :except => { :no_release => true } do
-          run "cd #{latest_release} ; nohup #{rake} RAILS_ENV=#{rails_env} #{asset_env} assets:precompile >> log/asset.log 2>&1 &", :pty => false
+        task :precompile, :roles => :web, :except => { :no_release => true } do
+          #run "cd #{latest_release} ; nohup #{rake} RAILS_ENV=#{rails_env} #{asset_env} assets:precompile >> log/asset.log 2>&1 &", :pty => false
         end
-       task :clean_assets, :roles => :web, :except => { :no_release => true } do
-          run "cd #{latest_release} && rm -r -f  #{latest_release}/public/assets/*"
+       task :symlink, :roles => :web, :except => { :no_release => true } do
+          #run ""
+          run "cd #{latest_release}; mkdir -p logs", :pty => false
+          run "cd #{latest_release}; mkdir -p tmp", :pty => false
         end
     end
 end
@@ -103,7 +90,7 @@ end
 namespace :deploy do
   desc "start server"
   task :start, :roles => :app do
-    run "cd #{current_path} && bundle exec thin start -C config/thin/thin.ewhine.yml"
+    run "cd #{current_path}/bin && server.sh start"
     #run "cd #{current_path} && bundle exec thin start -C config/thin/thin.faye.yml"
     # for some reason, the ssl need you to input the pem code to ssl start, this will hang up the capistrano.
     # run "#{sudo} /etc/init.d/nginx start"
@@ -111,7 +98,8 @@ namespace :deploy do
   
   desc "stop server"
   task :stop, :roles => :app do
-    run "cd #{current_path} && bundle exec thin stop -C config/thin/thin.ewhine.yml"
+    
+    run "cd #{current_path}/bin && server.sh stop"
     #run "cd #{current_path} && bundle exec thin stop -C config/thin/thin.faye.yml"
     #run "#{sudo} /etc/init.d/nginx stop"
     #run "cd #{current_path} && /etc/init.d/thin stop"

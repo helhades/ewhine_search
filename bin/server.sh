@@ -28,7 +28,7 @@ cd $serverdir
 
 start()
 {
-  nohup java -Xms$min_heap_size -Xmx$max_heap_size -XX:PermSize=128m -Xloggc:$server_logs/gc.log -XX:+PrintGCTimeStamps -XX:-PrintGCDetails -Dfile.encoding=UTF-8 -jar $serverjar  > $server_logs/server.log  &
+  nohup java -Xms$min_heap_size -Xmx$max_heap_size -XX:PermSize=128m -Xloggc:$server_logs/gc.log -XX:+PrintGCTimeStamps -XX:-PrintGCDetails -Dfile.encoding=UTF-8 -jar $serverjar  >> $server_logs/server.log 2>&1 &
   echo $! > $server_temp/$server_name.pid
   echo "server started!"
 }
