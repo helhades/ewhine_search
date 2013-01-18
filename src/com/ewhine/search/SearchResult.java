@@ -1,6 +1,7 @@
 package com.ewhine.search;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -12,6 +13,8 @@ public class SearchResult {
 	private int doc_numbers;
 	@SerializedName("total_hits")
 	private int totalHits;
+	@SerializedName("query_terms")
+	private ArrayList<String> query_terms = new ArrayList<String>();
 	@SerializedName("hit_items")
 	private ArrayList<SearchHitItem> hitItems;
 
@@ -33,6 +36,14 @@ public class SearchResult {
 
 	public int getTotalDocs() {
 		return doc_numbers;
+	}
+	
+	public void setQuery_term(String query_term) {
+		this.query_terms.add(query_term);
+	}
+	
+	public List<String> getQuery_terms() {
+		return query_terms;
 	}
 
 	public ArrayList<SearchHitItem> getHitItems() {

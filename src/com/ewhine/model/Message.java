@@ -10,7 +10,6 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.document.NumericField;
 
-import redis.clients.jedis.Jedis;
 import cn.gov.cbrc.db.StoreManager;
 import cn.gov.cbrc.db.TableClass;
 import cn.gov.cbrc.db.annotation.Column;

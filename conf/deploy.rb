@@ -90,7 +90,7 @@ end
 namespace :deploy do
   desc "start server"
   task :start, :roles => :app do
-    run "cd #{current_path}/bin && server.sh start"
+    run "cd #{current_path} && bin/server.sh start"
     #run "cd #{current_path} && bundle exec thin start -C config/thin/thin.faye.yml"
     # for some reason, the ssl need you to input the pem code to ssl start, this will hang up the capistrano.
     # run "#{sudo} /etc/init.d/nginx start"
@@ -99,7 +99,7 @@ namespace :deploy do
   desc "stop server"
   task :stop, :roles => :app do
     
-    run "cd #{current_path}/bin && server.sh stop"
+    run "cd #{current_path} && bin/server.sh stop"
     #run "cd #{current_path} && bundle exec thin stop -C config/thin/thin.faye.yml"
     #run "#{sudo} /etc/init.d/nginx stop"
     #run "cd #{current_path} && /etc/init.d/thin stop"

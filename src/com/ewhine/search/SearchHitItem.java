@@ -52,7 +52,27 @@ public class SearchHitItem {
 		if (ObjectType.TAG ==object_type) {
 			return "TAG";
 		}
-		
+		if (ObjectType.ATTACHMENT_FILE ==object_type) {
+			return "ATTACHMENT_FILE";
+		}
+		if (ObjectType.EVENT ==object_type) {
+			return "EVENT";
+		}
+		if (ObjectType.MINI_TASK ==object_type) {
+			return "MINI_TASK";
+		}
+		if (ObjectType.QUESTION ==object_type) {
+			return "QUESTION";
+		}
+		if (ObjectType.POLL ==object_type) {
+			return "POLL";
+		}
+		if (ObjectType.PRIASE ==object_type) {
+			return "PRIASE";
+		}
+		if (ObjectType.ANNOUNCEMENT ==object_type) {
+			return "ANNOUNCEMENT";
+		}
 		return "Unkwon";
 	}
 

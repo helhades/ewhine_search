@@ -30,7 +30,8 @@ public class SecurityFilter extends Filter {
 	public DocIdSet getDocIdSet(IndexReader reader) throws IOException {
 		OpenBitSet bits = new OpenBitSet(reader.maxDoc());
 		//System.out.println("get doc group:" + group.getId());
-
+		//long[] digital = FieldCache.DEFAULT.getLongs(reader,"g_id");
+		
 		for (Group group : groups) {
 			TermDocs termDocs = reader.termDocs(new Term("g_id", NumericUtils
 					.longToPrefixCoded(group.getId())));

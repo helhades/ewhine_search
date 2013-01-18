@@ -29,11 +29,17 @@ public class User {
 		return ret;
 	}
 	
+	public List<Group> conversation_groups() {
+		TableClass<Group> groupTable = StoreManager.open(Group.class);
+		List<Group> ret = groupTable.find_by_sql("select conversation_id as id from conversations_users where user_id = ?", id);
+		return ret;
+	}
+	
 	public List<Group> authorizedGroups() {
 		
 		TableClass<Group> groupTable = StoreManager.open(Group.class);
 		List<Group> user_groups = groupTable.find_by_sql("select group_id as id from groups_users where user_id = ?", id);
-		List<Group> public_groups = groupTable.find_by_sql("select id from groups where network_id = ? and privacy='public'", network_id);
+		List<Group> public_groups = groupTable.find_by_sql("select id from groups where network_id = ? and public_group=1", network_id);
 		public_groups.addAll(user_groups);
 		Comparator<Group> c = new Comparator<Group>() {
 
@@ -87,6 +93,11 @@ public class User {
 		for(Group g : groups) {
 			System.out.println("group:" + g.id);
 		}
+		List<Group> gs = u.conversation_groups();
+		for(Group g : gs) {
+			System.out.println("c_group:" + g.id);
+		}
+		
 
 	}
 

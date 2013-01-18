@@ -96,6 +96,7 @@ public class ZoieServiceServlet extends HttpServlet {
 		
 		request.setCharacterEncoding("UTF-8");
 		String queryString = request.getParameter("q");
+		String type_id = request.getParameter("type_id");
 		String user_id = request.getParameter("user_id");
 		String format = request.getParameter("format");
 
@@ -105,7 +106,7 @@ public class ZoieServiceServlet extends HttpServlet {
 		if (user_id != null && queryString != null && queryString.length() > 0) {
 			try {
 				long u_id = Long.parseLong(user_id);
-				result = searcher.search(u_id, queryString);
+				result = searcher.search(u_id, queryString,type_id);
 
 			} catch (Exception e) {
 				if (log.isErrorEnabled()) {
