@@ -15,6 +15,6 @@ public interface ObjectType {
 	public static int PRIASE = 9;
 	public static int ANNOUNCEMENT = 10;
 	public static int ATTACHMENT_FILE = 11;
-	public static int UPLOADED_FILE = 12;
+	//public static int UPLOADED_FILE = 12;
 
 }

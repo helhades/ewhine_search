@@ -18,20 +18,16 @@ import cn.gov.cbrc.wh.log.LogFactory;
 
 import com.ewhine.model.Group;
 
-public class EwhineSearchCollector extends Collector {
-	final private static Log log = LogFactory
-			.getLog(EwhineSearchCollector.class);
+public class TopNSearchCollector extends Collector {
+	final private static Log log = LogFactory.getLog(TopNSearchCollector.class);
 
-	private Scorer scorer;
 	private long[] user_group_ids;
 	private long[] group_ids;
-	private IndexReader reader;
-	private int docBase;
 	private TopFieldCollector collector;
 
 	private long[] user_conversation_ids;
 
-	public EwhineSearchCollector(List<Group> u_groups,
+	public TopNSearchCollector(List<Group> u_groups,
 			List<Group> conversation_group) {
 		Sort sort = new Sort(new SortField("updated_at",
 				new DocumentComparatorSource()));
@@ -68,12 +64,11 @@ public class EwhineSearchCollector extends Collector {
 		long g_id = group_ids[docID];
 
 		if ((g_id > 0 && Arrays.binarySearch(user_group_ids, g_id) >= 0)
-				|| (g_id < 0 && Arrays
-						.binarySearch(user_conversation_ids, (-g_id)) >= 0)) {
+				|| (g_id < 0 && Arrays.binarySearch(user_conversation_ids,
+						(-g_id)) >= 0)) {
 			collector.collect(docID);
 		}
 
-		System.out.println("g_id" + g_id);
 	}
 
 	public TopDocs topDocs() {
@@ -83,17 +78,13 @@ public class EwhineSearchCollector extends Collector {
 	@Override
 	public void setNextReader(IndexReader reader, int docBase)
 			throws IOException {
-		// TODO Auto-generated method stub
 		this.group_ids = FieldCache.DEFAULT.getLongs(reader, "g_id");
-		this.reader = reader;
-		this.docBase = docBase;
 		collector.setNextReader(reader, docBase);
 
 	}
 
 	@Override
 	public void setScorer(Scorer scorer) throws IOException {
-		this.scorer = scorer;
 		collector.setScorer(scorer);
 	}
 

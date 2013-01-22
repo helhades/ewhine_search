@@ -1,14 +1,15 @@
 package com.ewhine.search;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.velocity.VelocityContext;
+
 import com.google.gson.annotations.SerializedName;
 
-public class SearchResult {
+public class SearchResult implements ISearchResult {
 
-	@SerializedName("time")
-	private long time;
 	@SerializedName("document_numbers")
 	private int doc_numbers;
 	@SerializedName("total_hits")
@@ -18,10 +19,6 @@ public class SearchResult {
 	@SerializedName("hit_items")
 	private ArrayList<SearchHitItem> hitItems;
 
-	public void setTime(long l_time) {
-		this.time = l_time;
-	}
-
 	public void setTotalDocs(int numDocs) {
 		this.doc_numbers = numDocs;
 	}
@@ -30,18 +27,14 @@ public class SearchResult {
 		this.hitItems = hitList;
 	}
 
-	public long getTime() {
-		return time;
-	}
-
 	public int getTotalDocs() {
 		return doc_numbers;
 	}
-	
+
 	public void setQuery_term(String query_term) {
 		this.query_terms.add(query_term);
 	}
-	
+
 	public List<String> getQuery_terms() {
 		return query_terms;
 	}
@@ -56,6 +49,13 @@ public class SearchResult {
 
 	public int getTotalHits() {
 		return totalHits;
+	}
+
+	@Override
+	public void addToContext(VelocityContext context) throws IOException {
+
+		context.put("hits", this.getHitItems());
+
 	}
 
 }

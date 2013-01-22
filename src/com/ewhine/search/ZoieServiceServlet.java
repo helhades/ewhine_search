@@ -30,7 +30,7 @@ public class ZoieServiceServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	EwhineZoieSearchService searcher = null;
+	EwhineZoieSearchService searcherService = null;
 	ZoieIndexService indexer = null;
 	private IndexServer indexServer;
 
@@ -45,7 +45,7 @@ public class ZoieServiceServlet extends HttpServlet {
 
 		EwhineIndexReaderFactory factory = new EwhineIndexReaderFactory(indexer);
 
-		searcher = new EwhineZoieSearchService(factory);
+		searcherService = new EwhineZoieSearchService(factory);
 
 		indexer.start();
 		indexServer.start();
@@ -68,10 +68,10 @@ public class ZoieServiceServlet extends HttpServlet {
 		}
 		
 		if (log.isInfoEnabled()) {
-			
+			log.info("index server is starting.");
 		}
 
-		System.out.println("index server is starting.");
+		
 
 	}
 
@@ -99,14 +99,16 @@ public class ZoieServiceServlet extends HttpServlet {
 		String type_id = request.getParameter("type_id");
 		String user_id = request.getParameter("user_id");
 		String format = request.getParameter("format");
+		String mode = request.getParameter("mode");
 
 		// set content-type header before accessing the Writer
 
-		SearchResult result = null;
+		ISearchResult result = null;
 		if (user_id != null && queryString != null && queryString.length() > 0) {
 			try {
 				long u_id = Long.parseLong(user_id);
-				result = searcher.search(u_id, queryString,type_id);
+				ISearchModel search_mode = searcherService.createSearchMode(mode);
+				result = search_mode.search(u_id, queryString,type_id);
 
 			} catch (Exception e) {
 				if (log.isErrorEnabled()) {
@@ -125,6 +127,8 @@ public class ZoieServiceServlet extends HttpServlet {
 			Gson gson = new GsonBuilder().setFieldNamingPolicy(
 					FieldNamingPolicy.LOWER_CASE_WITH_DASHES).create();
 			out.println(gson.toJson(result));
+			
+			
 			out.flush();
 			out.close();
 
@@ -139,7 +143,7 @@ public class ZoieServiceServlet extends HttpServlet {
 			context.put("user_id", user_id);
 			context.put("q", queryString);
 			if (result != null) {
-				context.put("hits", result.getHitItems());
+				result.addToContext(context);
 			}
 			search_tmpl.merge(context, out);
 			out.flush();
