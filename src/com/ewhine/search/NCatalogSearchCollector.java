@@ -96,7 +96,9 @@ public class NCatalogSearchCollector extends Collector {
 				collector.collect(docID);
 			} else { // map the rest type to message
 				collector = collectors[ObjectType.MESSAGE];
-				collector.collect(docID);
+				if (collector != null) {
+					collector.collect(docID);
+				}
 			}
 		}
 

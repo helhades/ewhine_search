@@ -38,10 +38,12 @@ public class EwhineZoieSearchService {
 			}
 		}
 
-		if (smode == 0) {
+		if (smode == 0) { // return n catalog result in query.
 			return new NCatalogFetchSearch(_idxReaderFactory);
-		} else if (smode == 1) {
+		} else if (smode == 1) { // return top n catalog 
 			return new TopNFetchSearch(_idxReaderFactory);
+		} else if (smode == 2) { // prefix search 
+			return new NCatalogFetchPrefixSearch(_idxReaderFactory);
 		}
 		return new NCatalogFetchSearch(_idxReaderFactory);
 
