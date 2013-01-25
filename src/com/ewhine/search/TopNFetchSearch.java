@@ -12,7 +12,6 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanClause;
@@ -34,8 +33,7 @@ import com.ewhine.model.User;
 
 public class TopNFetchSearch implements ISearchModel {
 
-	private static final Logger log = Logger
-			.getLogger(TopNFetchSearch.class);
+	private static final Logger log = Logger.getLogger(TopNFetchSearch.class);
 
 	private IndexReaderFactory<ZoieIndexReader<IndexReader>> _idxReaderFactory;
 
@@ -44,11 +42,8 @@ public class TopNFetchSearch implements ISearchModel {
 		_idxReaderFactory = idxReaderFactory;
 	}
 
-
-
-
-	public ISearchResult search(long user_id, String queryString, String type_id)
-			throws ZoieException {
+	public ISearchResult search(long user_id, String queryString,
+			String type_id, int page_size, int page) throws ZoieException {
 
 		User user = User.find_by_id(user_id);
 		long network_id = user.getNetwork_id();
@@ -144,7 +139,7 @@ public class TopNFetchSearch implements ISearchModel {
 			}
 
 			SearchResult result = processResult(multiReader, topDocs);
-			
+
 			// 6. Extract the query terms.
 			HashSet<Term> out = new HashSet<Term>();
 			q.extractTerms(out);

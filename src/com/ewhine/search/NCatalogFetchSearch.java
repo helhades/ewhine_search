@@ -46,8 +46,8 @@ public class NCatalogFetchSearch implements ISearchModel {
 		_idxReaderFactory = idxReaderFactory;
 	}
 
-	public ISearchResult search(long user_id, String queryString, String type_id)
-			throws ZoieException {
+	public ISearchResult search(long user_id, String queryString,
+			String type_name, int i_page_size, int i_page) throws ZoieException {
 
 		User user = User.find_by_id(user_id);
 		long network_id = user.getNetwork_id();
@@ -57,8 +57,10 @@ public class NCatalogFetchSearch implements ISearchModel {
 		if (log.isInfoEnabled()) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("qid:").append(query_id).append(",uid:").append(user_id)
-					.append(",query:").append(queryString).append(",type_id:")
-					.append(type_id);
+					.append(",query:").append(queryString)
+					.append(",type_name:").append(type_name)
+					.append(",i_page_size:").append(i_page_size)
+					.append(",i_page:").append(i_page);
 			log.info(sb);
 		}
 
@@ -101,11 +103,35 @@ public class NCatalogFetchSearch implements ISearchModel {
 
 			combine_query.add(network_limit, BooleanClause.Occur.MUST);
 
-			if (type_id != null) {
-				TermQuery type_limit = new TermQuery(
-						new Term("type", NumericUtils.intToPrefixCoded(Integer
-								.parseInt(type_id))));
-				combine_query.add(type_limit, BooleanClause.Occur.MUST);
+			if (type_name != null) {
+				int type_id = -1;
+				if ("users".equals(type_name)) {
+					type_id = ObjectType.USER;
+				} else if ("groups".equals(type_name)) {
+					type_id = ObjectType.GROUP;
+				} else if ("uploaded_files".equals(type_name)) {
+					type_id = ObjectType.ATTACHMENT_FILE;
+				} else if ("topics".equals(type_name)) {
+					type_id = ObjectType.TOPIC;
+				} else if ("conversations".equals(type_name)) {
+					type_id = ObjectType.MESSAGE;
+				}
+				if (type_id == ObjectType.USER || type_id == ObjectType.GROUP
+						|| type_id == ObjectType.ATTACHMENT_FILE
+						|| type_id == ObjectType.TOPIC) {
+
+					TermQuery type_limit = new TermQuery(new Term("type",
+							NumericUtils.intToPrefixCoded(Integer
+									.parseInt(type_name))));
+					combine_query.add(type_limit, BooleanClause.Occur.MUST);
+
+				} else {
+					
+					TermQuery type_limit = new TermQuery(new Term("thread_id",
+							NumericUtils.longToPrefixCoded(0)));
+					combine_query.add(type_limit, BooleanClause.Occur.MUST_NOT);
+
+				}
 			}
 
 			combine_query.add(q, BooleanClause.Occur.MUST);
@@ -127,10 +153,14 @@ public class NCatalogFetchSearch implements ISearchModel {
 
 			// 4. Build custome's collector.
 			int[] type_ids = new int[] { ObjectType.MESSAGE, ObjectType.GROUP,
-					ObjectType.USER, ObjectType.ATTACHMENT_FILE, ObjectType.TAG };
+					ObjectType.USER, ObjectType.ATTACHMENT_FILE, ObjectType.TOPIC };
+
+			int page_end = i_page * i_page_size;
+			int page_start = page_end - i_page_size;
+
 			NCatalogSearchCollector collector = new NCatalogSearchCollector(
 					user.authorizedGroups(), user.conversation_groups(),
-					type_ids);
+					type_ids, page_end);
 
 			// 5. Start a search.
 			searcher.search(combine_query, collector);
@@ -146,7 +176,8 @@ public class NCatalogFetchSearch implements ISearchModel {
 
 			HashMap<Integer, TopDocs> topdocs = collector.topDocs();
 
-			ISearchResult result = processResult(multiReader, topdocs);
+			TypedSearchResult result = processResult(multiReader, topdocs,
+					page_start, page_end);
 
 			// 6. Extract the query terms.
 			HashSet<Term> out = new HashSet<Term>();
@@ -158,6 +189,11 @@ public class NCatalogFetchSearch implements ISearchModel {
 					result.setQuery_term(term.text());
 					queryText.add(term.text());
 				}
+			}
+			//add the conversation hitcount to result.
+			if (topdocs.containsKey(ObjectType.MESSAGE)) {
+				result.setHit_numbers(ObjectType.MESSAGE,
+						collector.getHitConverstaionsCount());
 			}
 
 			return result;
@@ -188,9 +224,9 @@ public class NCatalogFetchSearch implements ISearchModel {
 		}
 	}
 
-	private ISearchResult processResult(MultiReader multiReader,
-			HashMap<Integer, TopDocs> topDocs) throws CorruptIndexException,
-			IOException {
+	private TypedSearchResult processResult(MultiReader multiReader,
+			HashMap<Integer, TopDocs> topDocs, int start_doc, int end_doc)
+			throws CorruptIndexException, IOException {
 		TypedSearchResult result = new TypedSearchResult();
 
 		result.setTotalDocs(multiReader.numDocs());
@@ -198,10 +234,22 @@ public class NCatalogFetchSearch implements ISearchModel {
 		Set<Integer> keys = topDocs.keySet();
 		for (Integer type_id : keys) {
 			TopDocs topdoc = topDocs.get(type_id);
+
 			ScoreDoc[] scoreDocs = topdoc.scoreDocs;
 			ArrayList<SearchHitItem> hitItems = new ArrayList<SearchHitItem>(
 					scoreDocs.length);
-			for (ScoreDoc scoreDoc : scoreDocs) {
+
+			int end_index = (scoreDocs.length < end_doc ? scoreDocs.length
+					: end_doc);
+			int start_index = (end_index < start_doc ? (scoreDocs.length - (end_doc - start_doc))
+					: start_doc);
+
+			if (start_index < 0) {
+				start_index = 0;
+			}
+
+			for (int i = start_doc; i < end_index; i++) {
+				ScoreDoc scoreDoc = scoreDocs[i];
 
 				SearchHitItem hit = new SearchHitItem();
 				// System.out.println("set score:" +
@@ -225,8 +273,14 @@ public class NCatalogFetchSearch implements ISearchModel {
 				hitItems.add(hit);
 
 			}
+
+//			System.out.println("topdoc:" + topdoc.totalHits + ",type_id:"
+//					+ type_id + ",score length:" + scoreDocs.length + ",start:"
+//					+ start_doc + ",end:" + end_doc);
+
 			result.setHitItems(type_id, hitItems);
 			result.setHit_numbers(type_id, topdoc.totalHits);
+
 		}
 
 		return result;

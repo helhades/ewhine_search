@@ -56,7 +56,7 @@ public class EwhineZoieSearchService {
 		ISearchModel sm = service.createSearchMode("1");
 		ISearchResult result = null;
 		try {
-			result = sm.search(1, "card", null);
+			result = sm.search(1, "card", null,10,1);
 		} catch (ZoieException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

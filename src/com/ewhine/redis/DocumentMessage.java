@@ -128,11 +128,11 @@ public class DocumentMessage {
 				sb.append(head).append(" ").append(full).append(" ").append(full_part);
 			}
 
-			Fieldable f_name = new Field("name", name, Store.YES,
+			Fieldable f_name = new Field("name", name, Store.NO,
 					Index.ANALYZED);
 			d.add(f_name);
 			
-			Fieldable f_keyword = new Field("keyword", sb.toString(), Store.YES,
+			Fieldable f_keyword = new Field("keyword", sb.toString(), Store.NO,
 					Index.ANALYZED);
 			d.add(f_keyword);
 			
@@ -141,13 +141,13 @@ public class DocumentMessage {
 		// description
 		if (description != null) {
 			Fieldable f_description = new Field("description", description,
-					Store.YES, Index.ANALYZED);
+					Store.NO, Index.ANALYZED);
 			d.add(f_description);
 		}
 
 		// content
 		if (content != null) {
-			Fieldable f_content = new Field("content", content, Store.YES,
+			Fieldable f_content = new Field("content", content, Store.NO,
 					Index.ANALYZED);
 			d.add(f_content);
 		}

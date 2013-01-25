@@ -49,7 +49,7 @@ public class SearchHitItem {
 		if (ObjectType.USER ==object_type) {
 			return "USER";
 		}
-		if (ObjectType.TAG ==object_type) {
+		if (ObjectType.TOPIC ==object_type) {
 			return "TAG";
 		}
 		if (ObjectType.ATTACHMENT_FILE ==object_type) {

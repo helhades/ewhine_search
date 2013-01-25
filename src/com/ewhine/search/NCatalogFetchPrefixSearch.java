@@ -3,7 +3,6 @@ package com.ewhine.search;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -46,7 +45,7 @@ public class NCatalogFetchPrefixSearch implements ISearchModel {
 		_idxReaderFactory = idxReaderFactory;
 	}
 
-	public ISearchResult search(long user_id, String queryString, String type_id)
+	public ISearchResult search(long user_id, String queryString, String type_id,int page_size,int page)
 			throws ZoieException {
 
 		User user = User.find_by_id(user_id);
@@ -132,10 +131,10 @@ public class NCatalogFetchPrefixSearch implements ISearchModel {
 
 			// 4. Build custome's collector.
 			int[] type_ids = new int[] { ObjectType.GROUP, ObjectType.USER,
-					ObjectType.ATTACHMENT_FILE, ObjectType.TAG };
+					ObjectType.ATTACHMENT_FILE, ObjectType.TOPIC };
 			NCatalogSearchCollector collector = new NCatalogSearchCollector(
 					user.authorizedGroups(), user.conversation_groups(),
-					type_ids);
+					type_ids, 10); //We restrict the result only be 10.
 
 			// 5. Start a search.
 			searcher.search(combine_query, collector);

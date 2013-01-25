@@ -3,6 +3,7 @@ package com.ewhine.search;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
@@ -25,25 +26,33 @@ public class NCatalogSearchCollector extends Collector {
 			.getLog(NCatalogSearchCollector.class);
 
 	private long[] user_group_ids;
+	private long[] user_conversation_ids;
+
+	/**
+	 * doc cache
+	 */
 	private long[] group_ids;
+	private int[] type_ids;
+	private long[] thread_ids;
 	private TopFieldCollector[] collectors = new TopFieldCollector[20]; // max
 																		// type
 																		// size.
 
-	private long[] user_conversation_ids;
+	private HashSet<Long> merged_thread_ids = new HashSet<Long>();
 
-	private int[] type_ids;
+//	private long[] o_ids;
 
 	public NCatalogSearchCollector(List<Group> u_groups,
-			List<Group> conversation_group, int[] type_ids) {
+			List<Group> conversation_group, int[] type_ids, int keep_size) {
 
 		for (int type_id : type_ids) {
 			Sort sort = new Sort(new SortField("updated_at",
 					new DocumentComparatorSource()));
 
 			try {
-				collectors[type_id] = TopFieldCollector.create(sort, 10, false,
-						true, false, false);
+				collectors[type_id] = TopFieldCollector.create(sort,
+						keep_size, false, true, false, false);
+				
 			} catch (IOException e) {
 				log.error("create top field error.", e);
 			}
@@ -63,19 +72,6 @@ public class NCatalogSearchCollector extends Collector {
 
 	}
 
-	public HashMap<Integer, TopDocs> getCollectors() {
-
-		HashMap<Integer, TopDocs> topdocs = new HashMap<Integer, TopDocs>();
-		for (int i = 0, n = collectors.length; i < n; i++) {
-			TopFieldCollector colletor = collectors[i];
-			if (colletor != null) {
-				topdocs.put(i, colletor.topDocs());
-			}
-		}
-
-		return topdocs;
-	}
-
 	@Override
 	public boolean acceptsDocsOutOfOrder() {
 		return true;
@@ -91,14 +87,24 @@ public class NCatalogSearchCollector extends Collector {
 						(-g_id)) >= 0)) {
 			// find a catalog type collector to collect the doc.
 			int type_id = type_ids[docID];
-			TopFieldCollector collector = collectors[type_id];
-			if (collector != null) {
-				collector.collect(docID);
-			} else { // map the rest type to message
+			TopFieldCollector collector = null;
+			if (type_id >ObjectType.MESSAGE) { // map the rest type to message
 				collector = collectors[ObjectType.MESSAGE];
-				if (collector != null) {
-					collector.collect(docID);
-				}
+			} else {
+				collector = collectors[type_id];
+			}
+			
+			//increase the conservations hit count.
+
+			if (collector != null && type_id >= ObjectType.MESSAGE) {
+				long message_thread_id = this.thread_ids[docID];
+				
+				if (!merged_thread_ids.contains(message_thread_id)) {
+					merged_thread_ids.add(message_thread_id);
+				} 
+				
+				collector.collect(docID);
+
 			}
 		}
 
@@ -108,10 +114,19 @@ public class NCatalogSearchCollector extends Collector {
 		HashMap<Integer, TopDocs> tops = new HashMap<Integer, TopDocs>();
 		for (int i = 0; i < collectors.length; i++) {
 			if (collectors[i] != null) {
+				// ScoreDoc[] scoreDocs = collectors[i].topDocs().scoreDocs;
+				// for (ScoreDoc scoreDoc :scoreDocs) {
+				// System.out.println("scoredoc:" + scoreDoc);
+				// }
+
 				tops.put(i, collectors[i].topDocs());
 			}
 		}
 		return tops;
+	}
+
+	public int getHitConverstaionsCount() {
+		return this.merged_thread_ids.size();
 	}
 
 	@Override
@@ -119,6 +134,10 @@ public class NCatalogSearchCollector extends Collector {
 			throws IOException {
 		this.group_ids = FieldCache.DEFAULT.getLongs(reader, "g_id");
 		this.type_ids = FieldCache.DEFAULT.getInts(reader, "type");
+		//this.o_ids = FieldCache.DEFAULT.getLongs(reader, "type");
+		this.thread_ids = FieldCache.DEFAULT.getLongs(reader, "thread_id");
+
+
 		for (TopFieldCollector collector : collectors) {
 			if (collector != null) {
 				collector.setNextReader(reader, docBase);
