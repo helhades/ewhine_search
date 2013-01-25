@@ -2,7 +2,7 @@
 #  Using RVM rubies with Capistrano http://beginrescueend.com/integration/capistrano/
 #$:.unshift(File.expand_path('./lib', ENV['rvm_path'])) # Add RVM's lib directory to the load path.
 require 'rvm/capistrano'        
-set :rvm_ruby_string, 'ruby-1.9.3-p327@ewhine'        # Or whatever env you want it to run in.
+set :rvm_ruby_string, 'ruby-1.9.3-p374@ewhine'        # Or whatever env you want it to run in.
 set :rvm_type, :user            # system
 #ssh_options[:verbose] = :debug
 set :keep_releases, 1
@@ -62,15 +62,31 @@ namespace :deploy do
 
 end
 
+after "deploy:setup","deploy:file_store"
+
+namespace :deploy do
+
+  task :file_store do
+    run "mkdir -p #{deploy_to}/indexs"
+  end
+
+end
+
 #skipping asset pre-compilation if no change happen.
 #Only support git.
 
 
-#after "deploy:create_symlink", "deploy:link_file_store","deploy:copy_photos"
+after "deploy:create_symlink", "deploy:link_file_store"
 before "all","deploy:stop","deploy:update","deploy:start"
 #before "deploy:assets:precompile","deploy:assets:clean_assets"
 #after "deploy:update", "deploy:cleanup"
 
+namespace :deploy do
+  task :link_file_store do
+    run "cd #{current_path} && ln -s #{deploy_to}/indexs indexs"
+  end
+
+end
 
 
 namespace :deploy do
@@ -99,7 +115,7 @@ namespace :deploy do
   desc "stop server"
   task :stop, :roles => :app do
     
-    run "cd #{current_path} && bin/server.sh stop"
+    run "cd #{current_path} && bin/server.sh stop",:pty => false
     #run "cd #{current_path} && bundle exec thin stop -C config/thin/thin.faye.yml"
     #run "#{sudo} /etc/init.d/nginx stop"
     #run "cd #{current_path} && /etc/init.d/thin stop"
