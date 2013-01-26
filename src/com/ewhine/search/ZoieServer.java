@@ -100,6 +100,7 @@ public class ZoieServer {
 			log.warn("server port defaulting to 8888");
 			serverPort = 8888;
 		}
+		connector.setHost("127.0.0.1");
 		connector.setPort(serverPort);
 		server.addConnector(connector);
 
