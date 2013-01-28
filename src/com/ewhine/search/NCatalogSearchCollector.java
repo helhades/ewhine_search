@@ -40,19 +40,21 @@ public class NCatalogSearchCollector extends Collector {
 
 	private HashSet<Long> merged_thread_ids = new HashSet<Long>();
 
-//	private long[] o_ids;
+	// private long[] o_ids;
 
 	public NCatalogSearchCollector(List<Group> u_groups,
 			List<Group> conversation_group, int[] type_ids, int keep_size) {
 
 		for (int type_id : type_ids) {
+			//System.out.println("add type_id:" + type_id);
+
 			Sort sort = new Sort(new SortField("updated_at",
 					new DocumentComparatorSource()));
 
 			try {
-				collectors[type_id] = TopFieldCollector.create(sort,
-						keep_size, false, true, false, false);
-				
+				collectors[type_id] = TopFieldCollector.create(sort, keep_size,
+						false, true, false, false);
+
 			} catch (IOException e) {
 				log.error("create top field error.", e);
 			}
@@ -81,6 +83,7 @@ public class NCatalogSearchCollector extends Collector {
 	public void collect(int docID) throws IOException {
 
 		long g_id = group_ids[docID];
+		//System.out.println("doc_id:" + docID + ",g_id:" + g_id);
 
 		if ((g_id > 0 && Arrays.binarySearch(user_group_ids, g_id) >= 0)
 				|| (g_id < 0 && Arrays.binarySearch(user_conversation_ids,
@@ -88,21 +91,25 @@ public class NCatalogSearchCollector extends Collector {
 			// find a catalog type collector to collect the doc.
 			int type_id = type_ids[docID];
 			TopFieldCollector collector = null;
-			if (type_id >ObjectType.MESSAGE) { // map the rest type to message
+
+			if (type_id > ObjectType.MESSAGE) { // map the rest type to message
 				collector = collectors[ObjectType.MESSAGE];
 			} else {
 				collector = collectors[type_id];
 			}
-			
-			//increase the conservations hit count.
 
-			if (collector != null && type_id >= ObjectType.MESSAGE) {
-				long message_thread_id = this.thread_ids[docID];
-				
-				if (!merged_thread_ids.contains(message_thread_id)) {
-					merged_thread_ids.add(message_thread_id);
-				} 
-				
+			// increase the conservations hit count.
+
+			if (collector != null) {
+
+				if (type_id >= ObjectType.MESSAGE) {
+					long message_thread_id = this.thread_ids[docID];
+
+					if (!merged_thread_ids.contains(message_thread_id)) {
+						merged_thread_ids.add(message_thread_id);
+					}
+				}
+
 				collector.collect(docID);
 
 			}
@@ -134,9 +141,8 @@ public class NCatalogSearchCollector extends Collector {
 			throws IOException {
 		this.group_ids = FieldCache.DEFAULT.getLongs(reader, "g_id");
 		this.type_ids = FieldCache.DEFAULT.getInts(reader, "type");
-		//this.o_ids = FieldCache.DEFAULT.getLongs(reader, "type");
+		// this.o_ids = FieldCache.DEFAULT.getLongs(reader, "type");
 		this.thread_ids = FieldCache.DEFAULT.getLongs(reader, "thread_id");
-
 
 		for (TopFieldCollector collector : collectors) {
 			if (collector != null) {

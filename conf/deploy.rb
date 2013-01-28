@@ -106,7 +106,7 @@ end
 namespace :deploy do
   desc "start server"
   task :start, :roles => :app do
-    run "cd #{current_path} && bin/server.sh start"
+    run "cd #{current_path} && bin/server.sh start",:pty => false
     #run "cd #{current_path} && bundle exec thin start -C config/thin/thin.faye.yml"
     # for some reason, the ssl need you to input the pem code to ssl start, this will hang up the capistrano.
     # run "#{sudo} /etc/init.d/nginx start"

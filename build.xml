@@ -34,7 +34,7 @@
 		<delete dir="${classes.home}" failonerror="false" />
 	</target>
 	
-	<target name="clean:index" description="清除目录">
+	<target name="index:clean" description="清除目录">
 		<delete dir="${index.home}" failonerror="false" />
 	</target>
 

@@ -79,12 +79,15 @@ public class DocumentMessage {
 	public String toString() {
 
 		return "msg[network:" + network_id + ",data_type:" + data_type
-				+ ",object_id:" + object_id + ",plain:" + content + "]";
+				+ ",object_id:" + object_id + ",name:" + name + ",plain:"
+				+ content + "]";
 	}
 
 	public Document map() {
 
 		Document d = new Document();
+		
+		System.out.println("obj=" + this.toString());
 
 		// network_id
 		NumericField f_network_id = new NumericField("network_id", Store.YES,
@@ -111,7 +114,7 @@ public class DocumentMessage {
 
 		// name
 		if (name != null) {
-			//add pinyin to name
+			// add pinyin to name
 			StringBuilder sb = new StringBuilder();
 			List<String[]> pinyin = Pinyin4j.ofString(name);
 			for (String[] each : pinyin) {
@@ -125,17 +128,18 @@ public class DocumentMessage {
 						full_part.append(" ").append(e);
 					}
 				}
-				sb.append(head).append(" ").append(full).append(" ").append(full_part);
+				sb.append(head).append(" ").append(full).append(" ")
+						.append(full_part);
 			}
 
-			Fieldable f_name = new Field("name", name, Store.NO,
+			Fieldable f_name = new Field("name", name, Store.YES,
 					Index.ANALYZED);
 			d.add(f_name);
-			
-			Fieldable f_keyword = new Field("keyword", sb.toString(), Store.NO,
-					Index.ANALYZED);
+
+			Fieldable f_keyword = new Field("keyword", sb.toString(),
+					Store.YES, Index.ANALYZED);
 			d.add(f_keyword);
-			
+
 		}
 
 		// description

@@ -83,7 +83,7 @@ public class NCatalogFetchSearch implements ISearchModel {
 						Version.LUCENE_35, new String[] { "name", "keyword",
 								"description", "content" }, analyzer);
 				qparser.setPhraseSlop(1);
-				qparser.setDefaultOperator(QueryParser.AND_OPERATOR);
+				//qparser.setDefaultOperator(QueryParser.AND_OPERATOR);
 
 				q = qparser.parse(queryString);
 
@@ -123,13 +123,13 @@ public class NCatalogFetchSearch implements ISearchModel {
 					TermQuery type_limit = new TermQuery(new Term("type",
 							NumericUtils.intToPrefixCoded(Integer
 									.parseInt(type_name))));
-					combine_query.add(type_limit, BooleanClause.Occur.MUST);
+					//combine_query.add(type_limit, BooleanClause.Occur.MUST);
 
 				} else {
 					
 					TermQuery type_limit = new TermQuery(new Term("thread_id",
 							NumericUtils.longToPrefixCoded(0)));
-					combine_query.add(type_limit, BooleanClause.Occur.MUST_NOT);
+					//combine_query.add(type_limit, BooleanClause.Occur.MUST_NOT);
 
 				}
 			}
