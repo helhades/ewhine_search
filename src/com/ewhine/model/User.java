@@ -22,24 +22,24 @@ public class User {
 	public long getNetwork_id() {
 		return network_id;
 	}
-	
+	//Fixme: use the memcached to improve performance.
 	public List<Group> groups() {
 		TableClass<Group> groupTable = StoreManager.open(Group.class);
-		List<Group> ret = groupTable.find_by_sql("select group_id as id from groups_users where user_id = ?", id);
+		List<Group> ret = groupTable.find_by_sql("SELECT `groups`.id as id FROM `groups` INNER JOIN `groups_users` ON `groups`.`id` = `groups_users`.`group_id` WHERE `groups`.`deleted` = 0 AND `groups_users`.`user_id` = ?", id);
 		return ret;
 	}
 	
 	public List<Group> conversation_groups() {
 		TableClass<Group> groupTable = StoreManager.open(Group.class);
-		List<Group> ret = groupTable.find_by_sql("select conversation_id as id from conversations_users where user_id = ?", id);
+		List<Group> ret = groupTable.find_by_sql("SELECT `conversations`.id as id FROM `conversations` INNER JOIN `conversations_users` ON `conversations`.`id` = `conversations_users`.`conversation_id` WHERE `conversations_users`.`user_id` = ?", id);
 		return ret;
 	}
 	
 	public List<Group> authorizedGroups() {
 		
 		TableClass<Group> groupTable = StoreManager.open(Group.class);
-		List<Group> user_groups = groupTable.find_by_sql("select group_id as id from groups_users where user_id = ?", id);
-		List<Group> public_groups = groupTable.find_by_sql("select id from groups where network_id = ? and public_group=1", network_id);
+		List<Group> user_groups = groups();
+		List<Group> public_groups = groupTable.find_by_sql("select id from groups where network_id = ? and public_group=1 and deleted=0", network_id);
 		public_groups.addAll(user_groups);
 		Comparator<Group> c = new Comparator<Group>() {
 
@@ -60,7 +60,7 @@ public class User {
 		
 		List<Group> ret = new ArrayList<Group>();
 		Group last = null;
-		
+		// remove the duplicated group
 		for (int i=0,n=public_groups.size();i<n;i++){
 			Group g = public_groups.get(i);
 			if (last != null && last.id != g.id) {

@@ -38,6 +38,10 @@ public class SearchHitItem {
 	public void setObject_type(int object_type) {
 		this.object_type = object_type;
 	}
+	
+	public int getObject_type_id() {
+		return this.object_type;
+	}
 
 	public String getObject_type() {
 		if (ObjectType.MESSAGE ==object_type) {

@@ -13,7 +13,7 @@ import org.mortbay.thread.QueuedThreadPool;
 
 public class ZoieServer {
 	private static final Logger log = Logger.getLogger(ZoieServer.class);
-	private Server zServer = null;
+	private Server jettyServer = null;
 
 	/**
 	 * @param args
@@ -56,16 +56,16 @@ public class ZoieServer {
 		try {
 			minThread = Integer.parseInt(props.getProperty("min.thread"));
 		} catch (Exception e) {
-			log.error("defaulting min.thread to 50");
-			minThread = 50;
+			log.error("defaulting min.thread to 2");
+			minThread = 2;
 		}
 
 		int maxThread;
 		try {
 			maxThread = Integer.parseInt(props.getProperty("max.thread"));
 		} catch (Exception e) {
-			log.error("defaulting max.thread to 75");
-			maxThread = 75;
+			log.error("defaulting max.thread to 8");
+			maxThread = 8;
 		}
 
 		int maxIdleTime;
@@ -113,7 +113,6 @@ public class ZoieServer {
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				
 				try {
 					server.stop();
 				} catch (Exception e) {
@@ -126,7 +125,7 @@ public class ZoieServer {
 			log.info("starting server ... ");
 			server.start();
 			log.info("server started.");
-			zServer = server;
+			jettyServer = server;
 			
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -138,15 +137,15 @@ public class ZoieServer {
 	
 	public void stop() {
 		
-		if (zServer != null) {
+		if (jettyServer != null) {
 			log.info("shutting down...");
 			try {
-				zServer.stop();
+				jettyServer.stop();
 				log.info("shutdown successful");
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
 			} finally {
-				zServer.destroy();
+				jettyServer.destroy();
 			}
 		}
 		
@@ -157,7 +156,7 @@ public class ZoieServer {
 		try {
 			server.start();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error(e.getMessage(), e);
 		}
 	}
 }

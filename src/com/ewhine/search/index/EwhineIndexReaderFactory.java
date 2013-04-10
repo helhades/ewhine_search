@@ -1,4 +1,4 @@
-package com.ewhine.search;
+package com.ewhine.search.index;
 
 import java.io.IOException;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.wltea.analyzer.lucene.IKAnalyzer;
+
 
 import proj.zoie.api.IndexReaderFactory;
 import proj.zoie.api.ZoieIndexReader;

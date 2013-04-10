@@ -18,6 +18,11 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import cn.gov.cbrc.wh.log.Log;
 import cn.gov.cbrc.wh.log.LogFactory;
 
+import com.ewhine.search.faceted.ISearchModel;
+import com.ewhine.search.faceted.ISearchResult;
+import com.ewhine.search.index.EwhineIndexReaderFactory;
+import com.ewhine.search.index.IndexServer;
+import com.ewhine.search.index.ZoieIndexService;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,7 +40,7 @@ public class ZoieServiceServlet extends HttpServlet {
 	private IndexServer indexServer;
 
 	public ZoieServiceServlet() {
-		// TODO Auto-generated constructor stub
+
 	}
 
 	public void init() throws ServletException {
@@ -76,6 +81,7 @@ public class ZoieServiceServlet extends HttpServlet {
 	public void destroy() {
 
 		if (indexServer != null) {
+			
 			System.out.print("index server is stopping...");
 			indexServer.stop();
 			System.out.println("done.");
@@ -99,14 +105,15 @@ public class ZoieServiceServlet extends HttpServlet {
 		String mode = request.getParameter("mode");
 		String page_size = request.getParameter("page_size");
 		String page = request.getParameter("page");
-		
+
+		//log user input.
 		if (log.isInfoEnabled()) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("search parameters:").append(",uid:").append(user_id)
 					.append(",query:").append(queryString)
 					.append(",type_name:").append(type_name)
-					.append(",page_size:").append(page_size)
-					.append(",page:").append(page);
+					.append(",page_size:").append(page_size).append(",page:")
+					.append(page);
 			log.info(sb);
 		}
 
@@ -118,26 +125,25 @@ public class ZoieServiceServlet extends HttpServlet {
 
 				int i_page_size = 10;
 				int i_page = 1;
-				
-				if (page_size != null && page_size.length() >0 ) {
+
+				if (page_size != null && page_size.length() > 0) {
 					i_page_size = Integer.parseInt(page_size);
-					if (i_page_size > 10 ) {
+					if (i_page_size > 10) {
 						i_page_size = 10;
 					}
 				}
-				if (page != null && page.length() >0) {
+				if (page != null && page.length() > 0) {
 					i_page = Integer.parseInt(page);
-					if (i_page >10) {
+					if (i_page > 10) {
 						i_page = 10;
 					}
 				}
-				
+
 				long u_id = Long.parseLong(user_id);
-				
-				
+
 				ISearchModel search_mode = searcherService
 						.createSearchMode(mode);
-				
+
 				result = search_mode.search(u_id, queryString, type_name,
 						i_page_size, i_page);
 

@@ -3,6 +3,13 @@ package com.ewhine.search;
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
+import com.ewhine.search.catalog_result.CatalogFetchSearch;
+import com.ewhine.search.faceted.ISearchModel;
+import com.ewhine.search.faceted.ISearchResult;
+import com.ewhine.search.faceted.NCatalogFetchPrefixSearch;
+import com.ewhine.search.faceted.TopNFetchSearch;
+import com.ewhine.search.index.EwhineIndexReaderFactory;
+import com.ewhine.search.index.ZoieIndexService;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -39,13 +46,13 @@ public class EwhineZoieSearchService {
 		}
 
 		if (smode == 0) { // return n catalog result in query.
-			return new NCatalogFetchSearch(_idxReaderFactory);
+			return new CatalogFetchSearch(_idxReaderFactory);
 		} else if (smode == 1) { // return top n catalog 
 			return new TopNFetchSearch(_idxReaderFactory);
 		} else if (smode == 2) { // prefix search 
 			return new NCatalogFetchPrefixSearch(_idxReaderFactory);
 		}
-		return new NCatalogFetchSearch(_idxReaderFactory);
+		return new CatalogFetchSearch(_idxReaderFactory);
 
 	}
 	public static void main(String[] args) {

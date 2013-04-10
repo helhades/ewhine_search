@@ -1,4 +1,4 @@
-package com.ewhine.search;
+package com.ewhine.search.index;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +19,8 @@ import cn.gov.cbrc.wh.log.Log;
 import cn.gov.cbrc.wh.log.LogFactory;
 
 import com.ewhine.redis.DocumentMessage;
+import com.ewhine.search.DataDocument;
+import com.ewhine.search.DataDocumentInterpreter;
 
 public class ZoieIndexService {
 
@@ -104,10 +106,10 @@ public class ZoieIndexService {
 	public void indexDocument(ArrayList<DocumentMessage> docPackages) {
 		Collection<DataEvent<DataDocument>> eventList = new ArrayList<DataEvent<DataDocument>>(
 				100);
-		for (DocumentMessage docPackage : docPackages) {
+		for (DocumentMessage doc_message : docPackages) {
 
 			DataEvent<DataDocument> de = new DataEvent<DataDocument>(
-					new DataDocument(docPackage), "1");
+					new DataDocument(doc_message), "1");
 			eventList.add(de);
 
 		}

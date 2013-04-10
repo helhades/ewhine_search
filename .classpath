@@ -23,8 +23,8 @@
 	<classpathentry kind="lib" path="lib/gson-2.2.2.jar"/>
 	<classpathentry kind="lib" path="lib/pinyin4j-2.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/netty-3.5.10.Final.jar"/>
+	<classpathentry kind="lib" path="lib/cn.gov.cbrc.db.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/cbrc.db.util"/>
 	<classpathentry kind="lib" path="lib/lucene-highlighter-3.6.0.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-memory-3.5.0.jar"/>
 	<classpathentry kind="output" path="tmp/classes"/>

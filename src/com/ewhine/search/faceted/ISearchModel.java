@@ -1,4 +1,5 @@
-package com.ewhine.search;
+package com.ewhine.search.faceted;
+
 
 import proj.zoie.api.ZoieException;
 

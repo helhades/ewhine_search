@@ -1,4 +1,4 @@
-package com.ewhine.search;
+package com.ewhine.search.index;
 
 import java.io.IOException;
 import java.util.ArrayList;

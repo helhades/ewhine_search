@@ -86,8 +86,6 @@ public class DocumentMessage {
 	public Document map() {
 
 		Document d = new Document();
-		
-		System.out.println("obj=" + this.toString());
 
 		// network_id
 		NumericField f_network_id = new NumericField("network_id", Store.YES,

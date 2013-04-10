@@ -1,4 +1,4 @@
-package com.ewhine.search;
+package com.ewhine.search.collector;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -17,6 +17,7 @@ import cn.gov.cbrc.wh.log.Log;
 import cn.gov.cbrc.wh.log.LogFactory;
 
 import com.ewhine.model.Group;
+import com.ewhine.search.DocumentComparatorSource;
 
 public class TopNSearchCollector extends Collector {
 	final private static Log log = LogFactory.getLog(TopNSearchCollector.class);

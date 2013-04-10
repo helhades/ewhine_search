@@ -1,4 +1,4 @@
-package com.ewhine.search;
+package com.ewhine.search.catalog_result;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +18,7 @@ import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -33,15 +34,18 @@ import proj.zoie.api.ZoieIndexReader;
 
 import com.ewhine.model.ObjectType;
 import com.ewhine.model.User;
+import com.ewhine.search.SearchHitItem;
+import com.ewhine.search.faceted.ISearchModel;
+import com.ewhine.search.faceted.ISearchResult;
 
-public class NCatalogFetchSearch implements ISearchModel {
+public class CatalogFetchSearch implements ISearchModel {
 
 	private static final Logger log = Logger
-			.getLogger(NCatalogFetchSearch.class);
+			.getLogger(CatalogFetchSearch.class);
 
 	private IndexReaderFactory<ZoieIndexReader<IndexReader>> _idxReaderFactory;
 
-	public NCatalogFetchSearch(
+	public CatalogFetchSearch(
 			IndexReaderFactory<ZoieIndexReader<IndexReader>> idxReaderFactory) {
 		_idxReaderFactory = idxReaderFactory;
 	}
@@ -83,13 +87,13 @@ public class NCatalogFetchSearch implements ISearchModel {
 						Version.LUCENE_35, new String[] { "name", "keyword",
 								"description", "content" }, analyzer);
 				qparser.setPhraseSlop(1);
-				//qparser.setDefaultOperator(QueryParser.AND_OPERATOR);
+				// qparser.setDefaultOperator(QueryParser.AND_OPERATOR);
 
 				q = qparser.parse(queryString);
 
 				if (log.isInfoEnabled()) {
-					log.info("Query user_id:" + user_id + ",Network:"
-							+ network_id + ",q paraed:" + q);
+					log.info("query_id:" + query_id + ",user_id:" + user_id
+							+ ",Network:" + network_id + ",q paraed:" + q);
 
 				}
 
@@ -121,15 +125,16 @@ public class NCatalogFetchSearch implements ISearchModel {
 						|| type_id == ObjectType.TOPIC) {
 
 					TermQuery type_limit = new TermQuery(new Term("type",
-							NumericUtils.intToPrefixCoded(Integer
-									.parseInt(type_name))));
-					//combine_query.add(type_limit, BooleanClause.Occur.MUST);
+							NumericUtils.intToPrefixCoded(type_id)));
+					combine_query.add(type_limit, BooleanClause.Occur.MUST);
 
-				} else {
-					
+				}
+				if (type_id == ObjectType.MESSAGE) {
+
 					TermQuery type_limit = new TermQuery(new Term("thread_id",
 							NumericUtils.longToPrefixCoded(0)));
-					//combine_query.add(type_limit, BooleanClause.Occur.MUST_NOT);
+					// only message and mini_apps
+					combine_query.add(type_limit, BooleanClause.Occur.MUST_NOT);
 
 				}
 			}
@@ -153,12 +158,13 @@ public class NCatalogFetchSearch implements ISearchModel {
 
 			// 4. Build custome's collector.
 			int[] type_ids = new int[] { ObjectType.MESSAGE, ObjectType.GROUP,
-					ObjectType.USER, ObjectType.ATTACHMENT_FILE, ObjectType.TOPIC };
+					ObjectType.USER, ObjectType.ATTACHMENT_FILE,
+					ObjectType.TOPIC };
 
 			int page_end = i_page * i_page_size;
 			int page_start = page_end - i_page_size;
 
-			NCatalogSearchCollector collector = new NCatalogSearchCollector(
+			CatalogResultCollector collector = new CatalogResultCollector(
 					user.authorizedGroups(), user.conversation_groups(),
 					type_ids, page_end);
 
@@ -174,10 +180,8 @@ public class NCatalogFetchSearch implements ISearchModel {
 				log.warn("query_id:" + query_id + " spend:" + time + "ms");
 			}
 
-			HashMap<Integer, TopDocs> topdocs = collector.topDocs();
-
-			TypedSearchResult result = processResult(multiReader, topdocs,
-					page_start, page_end);
+			CatalogedSearchResult result = processResult(multiReader,
+					collector, page_start, page_end);
 
 			// 6. Extract the query terms.
 			HashSet<Term> out = new HashSet<Term>();
@@ -190,10 +194,10 @@ public class NCatalogFetchSearch implements ISearchModel {
 					queryText.add(term.text());
 				}
 			}
-			//add the conversation hitcount to result.
-			if (topdocs.containsKey(ObjectType.MESSAGE)) {
-				result.setHit_numbers(ObjectType.MESSAGE,
-						collector.getHitConverstaionsCount());
+
+			if (log.isInfoEnabled()) {
+				log.info("query_id:" + query_id + ",result: hit:"
+						+ result.getTotal_hit());
 			}
 
 			return result;
@@ -224,15 +228,18 @@ public class NCatalogFetchSearch implements ISearchModel {
 		}
 	}
 
-	private TypedSearchResult processResult(MultiReader multiReader,
-			HashMap<Integer, TopDocs> topDocs, int start_doc, int end_doc)
+	private CatalogedSearchResult processResult(MultiReader multiReader,
+			CatalogResultCollector collector, int start_doc, int end_doc)
 			throws CorruptIndexException, IOException {
-		TypedSearchResult result = new TypedSearchResult();
 
+		HashMap<Integer, TopDocs> topDocs = collector.topDocs();
+
+		CatalogedSearchResult result = new CatalogedSearchResult();
 		result.setTotalDocs(multiReader.numDocs());
-
 		Set<Integer> keys = topDocs.keySet();
+
 		for (Integer type_id : keys) {
+
 			TopDocs topdoc = topDocs.get(type_id);
 
 			ScoreDoc[] scoreDocs = topdoc.scoreDocs;
@@ -248,6 +255,7 @@ public class NCatalogFetchSearch implements ISearchModel {
 				start_index = 0;
 			}
 
+			Collector coll = collector.getCollector(type_id);
 			for (int i = start_doc; i < end_index; i++) {
 				ScoreDoc scoreDoc = scoreDocs[i];
 
@@ -259,28 +267,42 @@ public class NCatalogFetchSearch implements ISearchModel {
 				int docid = scoreDoc.doc;
 
 				Document doc = multiReader.document(docid);
+				long obj_id = Long.valueOf(doc.get("o_id"));
 
-				hit.setObject_id(Long.valueOf(doc.get("o_id")));
-				hit.setObject_type(Integer.valueOf(doc.get("type")));
+				hit.setObject_id(obj_id);
+				hit.setObject_type(type_id);
 				hit.setDoc_id(docid);
 
-				String name = doc.get("name");
+				if (type_id == ObjectType.MESSAGE) {
 
-				if (name != null) {
-					hit.setName(name);
+					Long thread_id = Long.valueOf(doc.get("thread_id"));
+					ArrayList<SearchHitItem> items = ((ThreadCollector) coll)
+							.getHitItemByThreadId(thread_id);
+					if (items != null) {
+						for (SearchHitItem msg_hit : items) {
+							hitItems.add(msg_hit);
+						}
+					}
+
+				} else {
+					hitItems.add(hit);
 				}
-
-				hitItems.add(hit);
 
 			}
 
-//			System.out.println("topdoc:" + topdoc.totalHits + ",type_id:"
-//					+ type_id + ",score length:" + scoreDocs.length + ",start:"
-//					+ start_doc + ",end:" + end_doc);
+			// System.out.println("topdoc:" + topdoc.totalHits + ",type_id:"
+			// + type_id + ",score length:" + scoreDocs.length + ",start:"
+			// + start_doc + ",end:" + end_doc);
 
 			result.setHitItems(type_id, hitItems);
 			result.setHit_numbers(type_id, topdoc.totalHits);
 
+		}
+		// add the conversation hitcount to result.
+		if (topDocs.containsKey(ObjectType.MESSAGE)) {
+			Collector coll = collector.getCollector(ObjectType.MESSAGE);
+			result.setHit_numbers(ObjectType.MESSAGE,
+					((ThreadCollector) coll).getConverstaionsHitCount());
 		}
 
 		return result;

@@ -3,7 +3,7 @@ import cn.gov.cbrc.db.TableClass;
 
 import com.ewhine.model.Message;
 import com.ewhine.redis.DocumentMessage;
-import com.ewhine.search.ZoieIndexService;
+import com.ewhine.search.index.ZoieIndexService;
 
 
 public class TestIndex {

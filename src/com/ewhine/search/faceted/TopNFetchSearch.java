@@ -1,10 +1,9 @@
-package com.ewhine.search;
+package com.ewhine.search.faceted;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -30,23 +29,24 @@ import proj.zoie.api.IndexReaderFactory;
 import proj.zoie.api.ZoieException;
 import proj.zoie.api.ZoieIndexReader;
 
-import com.ewhine.model.ObjectType;
 import com.ewhine.model.User;
+import com.ewhine.search.SearchHitItem;
+import com.ewhine.search.SearchResult;
+import com.ewhine.search.collector.TopNSearchCollector;
 
-public class NCatalogFetchPrefixSearch implements ISearchModel {
+public class TopNFetchSearch implements ISearchModel {
 
-	private static final Logger log = Logger
-			.getLogger(NCatalogFetchPrefixSearch.class);
+	private static final Logger log = Logger.getLogger(TopNFetchSearch.class);
 
 	private IndexReaderFactory<ZoieIndexReader<IndexReader>> _idxReaderFactory;
 
-	public NCatalogFetchPrefixSearch(
+	public TopNFetchSearch(
 			IndexReaderFactory<ZoieIndexReader<IndexReader>> idxReaderFactory) {
 		_idxReaderFactory = idxReaderFactory;
 	}
 
-	public ISearchResult search(long user_id, String queryString, String type_id,int page_size,int page)
-			throws ZoieException {
+	public ISearchResult search(long user_id, String queryString,
+			String type_id, int page_size, int page) throws ZoieException {
 
 		User user = User.find_by_id(user_id);
 		long network_id = user.getNetwork_id();
@@ -80,14 +80,9 @@ public class NCatalogFetchPrefixSearch implements ISearchModel {
 						Version.LUCENE_35, new String[] { "name", "keyword",
 								"description", "content" }, analyzer);
 				qparser.setPhraseSlop(1);
-
 				qparser.setDefaultOperator(QueryParser.AND_OPERATOR);
 
-				if (queryString.endsWith("*")) {
-					q = qparser.parse(queryString);
-				} else {
-					q = qparser.parse(queryString + "*");
-				}
+				q = qparser.parse(queryString);
 
 				if (log.isInfoEnabled()) {
 					log.info("Query user_id:" + user_id + ",Network:"
@@ -130,14 +125,12 @@ public class NCatalogFetchPrefixSearch implements ISearchModel {
 			// 10, sort);
 
 			// 4. Build custome's collector.
-			int[] type_ids = new int[] { ObjectType.GROUP, ObjectType.USER,
-					ObjectType.ATTACHMENT_FILE, ObjectType.TOPIC };
-			NCatalogSearchCollector collector = new NCatalogSearchCollector(
-					user.authorizedGroups(), user.conversation_groups(),
-					type_ids, 10); //We restrict the result only be 10.
+			TopNSearchCollector collector = new TopNSearchCollector(
+					user.authorizedGroups(), user.conversation_groups());
 
 			// 5. Start a search.
 			searcher.search(combine_query, collector);
+			TopDocs topDocs = collector.topDocs();
 
 			// Explanation exp = searcher.explain(all_combin, 1);
 			// System.out.println("exp:" + exp);
@@ -148,21 +141,19 @@ public class NCatalogFetchPrefixSearch implements ISearchModel {
 				log.warn("query_id:" + query_id + " spend:" + time + "ms");
 			}
 
-			HashMap<Integer, TopDocs> topdocs = collector.topDocs();
-
-			ISearchResult result = processResult(multiReader, topdocs);
+			SearchResult result = processResult(multiReader, topDocs);
 
 			// 6. Extract the query terms.
-			// HashSet<Term> out = new HashSet<Term>();
-			// q.extractTerms(out);
-			// HashSet<String> queryText = new HashSet<String>();
-			//
-			// for (Term term : out) {
-			// if (!queryText.contains(term.text())) {
-			// result.setQuery_term(term.text());
-			// queryText.add(term.text());
-			// }
-			// }
+			HashSet<Term> out = new HashSet<Term>();
+			q.extractTerms(out);
+			HashSet<String> queryText = new HashSet<String>();
+
+			for (Term term : out) {
+				if (!queryText.contains(term.text())) {
+					result.setQuery_term(term.text());
+					queryText.add(term.text());
+				}
+			}
 
 			return result;
 
@@ -192,46 +183,43 @@ public class NCatalogFetchPrefixSearch implements ISearchModel {
 		}
 	}
 
-	private ISearchResult processResult(MultiReader multiReader,
-			HashMap<Integer, TopDocs> topDocs) throws CorruptIndexException,
-			IOException {
-		TypedSearchResult result = new TypedSearchResult();
+	private SearchResult processResult(MultiReader multiReader, TopDocs topDocs)
+			throws CorruptIndexException, IOException {
+		SearchResult result = new SearchResult();
 
 		result.setTotalDocs(multiReader.numDocs());
+		result.setTotalHits(topDocs.totalHits);
 
-		Set<Integer> keys = topDocs.keySet();
-		for (Integer type_id : keys) {
-			TopDocs topdoc = topDocs.get(type_id);
-			ScoreDoc[] scoreDocs = topdoc.scoreDocs;
-			ArrayList<SearchHitItem> hitItems = new ArrayList<SearchHitItem>(
-					scoreDocs.length);
-			for (ScoreDoc scoreDoc : scoreDocs) {
+		ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 
-				SearchHitItem hit = new SearchHitItem();
-				// System.out.println("set score:" +
-				// ((FieldDoc)scoreDoc).fields[0]);
-				// hit.setScore(scoreDoc.score);
+		ArrayList<SearchHitItem> hitItems = new ArrayList<SearchHitItem>(
+				scoreDocs.length);
+		for (ScoreDoc scoreDoc : scoreDocs) {
 
-				int docid = scoreDoc.doc;
+			SearchHitItem hit = new SearchHitItem();
+			// System.out.println("set score:" +
+			// ((FieldDoc)scoreDoc).fields[0]);
+			// hit.setScore(scoreDoc.score);
 
-				Document doc = multiReader.document(docid);
+			int docid = scoreDoc.doc;
 
-				hit.setObject_id(Long.valueOf(doc.get("o_id")));
-				hit.setObject_type(Integer.valueOf(doc.get("type")));
-				hit.setDoc_id(docid);
+			Document doc = multiReader.document(docid);
 
-				String name = doc.get("name");
+			hit.setObject_id(Long.valueOf(doc.get("o_id")));
+			hit.setObject_type(Integer.valueOf(doc.get("type")));
+			hit.setDoc_id(docid);
 
-				if (name != null) {
-					hit.setName(name);
-				}
+			String name = doc.get("name");
 
-				hitItems.add(hit);
-
+			if (name != null) {
+				hit.setName(name);
 			}
-			result.setHitItems(type_id, hitItems);
-			result.setHit_numbers(type_id, topdoc.totalHits);
+
+			hitItems.add(hit);
+
 		}
+
+		result.setHitItems(hitItems);
 
 		return result;
 	}

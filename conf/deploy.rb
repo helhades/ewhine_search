@@ -26,6 +26,7 @@ set :git_shallow_clone, 1
 set :scm_verbose, true
 
 ssh_options[:forward_agent] = true
+ssh_options[:port] = 2222
 
 # deployment details
 set :use_sudo, false
@@ -45,7 +46,7 @@ default_run_options[:shell] = false
 default_run_options[:pty] = true
 
 set :deploy_to, "/home/ewhine/deploy/#{application}"
-server 'ewhine@www.gz3renxing.com', :app, :web, :db, :primary => true
+server 'ewhine@www.weixinwork.com', :app, :web, :db, :primary => true
 
 #after "deploy:finalize_update","deploy:compile"
 namespace :bundle do

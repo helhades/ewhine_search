@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.velocity.VelocityContext;
 
+import com.ewhine.search.faceted.ISearchResult;
 import com.google.gson.annotations.SerializedName;
 
 public class SearchResult implements ISearchResult {

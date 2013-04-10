@@ -1,4 +1,4 @@
-package com.ewhine.search;
+package com.ewhine.search.catalog_result;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -7,9 +7,11 @@ import java.util.List;
 
 import org.apache.velocity.VelocityContext;
 
+import com.ewhine.search.SearchHitItem;
+import com.ewhine.search.faceted.ISearchResult;
 import com.google.gson.annotations.SerializedName;
 
-public class TypedSearchResult implements ISearchResult {
+public class CatalogedSearchResult implements ISearchResult {
 
 	@SerializedName("document_numbers")
 	private int doc_numbers;
@@ -28,10 +30,19 @@ public class TypedSearchResult implements ISearchResult {
 	public void setTotalDocs(int numDocs) {
 		this.doc_numbers = numDocs;
 	}
+	
+	public int getTotal_hit() {
+		int total_hit = 0;
+		for (Integer num : hit_numbers.values()) {
+			total_hit = total_hit + num;
+		}
+		return total_hit;
+	}
 
 	public void setHitItems(int type_id,ArrayList<SearchHitItem> hitList) {
 		this.type_ids.add(type_id);
 		this.hitItems.put(type_id, hitList);
+		
 	}
 	
 	public void setHit_numbers(int type_id, int hit_number) {
