@@ -23,7 +23,7 @@ public class ZoieServer {
 		String confDirName = System.getProperty("conf.dir");
 		File confDir = null;
 		if (confDirName == null) {
-			confDir = new File("conf");
+			confDir = new File("config");
 		} else {
 			confDir = new File(confDirName);
 		}
