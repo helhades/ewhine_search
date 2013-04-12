@@ -90,9 +90,7 @@ public class CatalogResultCollector extends Collector {
 		long g_id = group_ids[docID];
 		// System.out.println("doc_id:" + docID + ",g_id:" + g_id);
 
-		if ((g_id > 0 && Arrays.binarySearch(user_group_ids, g_id) >= 0)
-				|| (g_id < 0 && Arrays.binarySearch(user_conversation_ids,
-						(-g_id)) >= 0)) {
+		if (has_auth(g_id)) {
 			// find a catalog type collector to collect the doc.
 			int type_id = type_ids[docID];
 			Collector collector = null;
@@ -120,6 +118,12 @@ public class CatalogResultCollector extends Collector {
 			}
 		}
 
+	}
+
+	private boolean has_auth(long g_id) {
+		return (g_id > 0 && Arrays.binarySearch(user_group_ids, g_id) >= 0)
+				|| (g_id < 0 && Arrays.binarySearch(user_conversation_ids,
+						(-g_id)) >= 0);
 	}
 
 	public HashMap<Integer, TopDocs> topDocs() {

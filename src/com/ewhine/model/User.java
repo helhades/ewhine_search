@@ -63,9 +63,9 @@ public class User {
 		// remove the duplicated group
 		for (int i=0,n=public_groups.size();i<n;i++){
 			Group g = public_groups.get(i);
-			if (last != null && last.id != g.id) {
+			if (last == null ||last.id != g.id ) {
 				ret.add(g);
-			}
+			} 
 			last = g;
 		}
 		

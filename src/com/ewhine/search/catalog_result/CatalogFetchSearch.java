@@ -87,7 +87,7 @@ public class CatalogFetchSearch implements ISearchModel {
 						Version.LUCENE_35, new String[] { "name", "keyword",
 								"description", "content" }, analyzer);
 				qparser.setPhraseSlop(1);
-				// qparser.setDefaultOperator(QueryParser.AND_OPERATOR);
+				//qparser.setDefaultOperator(QueryParser.OR_OPERATOR);
 
 				q = qparser.parse(queryString);
 
