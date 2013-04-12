@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="conf"/>
+	<classpathentry kind="src" path="config"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="lib" path="lib/com.ewhine.search.jar"/>
 	<classpathentry kind="lib" path="lib/commons-collections-3.2.1.jar"/>
