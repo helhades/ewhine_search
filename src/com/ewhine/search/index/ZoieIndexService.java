@@ -50,16 +50,18 @@ public class ZoieIndexService {
 	}
 
 	public void start() {
-		
-		String index_dir = System.getProperties().getProperty("indexs.dir","indexs");
+
+		String index_dir = System.getProperties().getProperty("indexs.dir",
+				"indexs");
 
 		File idxDir = new File(index_dir);
 		if (!idxDir.exists()) {
 			log.error("Fatal find index directory:" + idxDir.getAbsolutePath());
 		}
-		
+
 		if (log.isInfoEnabled()) {
-			log.info("Starting index server,using directory:" + idxDir.getAbsolutePath());
+			log.info("Starting index server,using directory:"
+					+ idxDir.getAbsolutePath());
 		}
 
 		ZoieConfig zConfig = new ZoieConfig();
@@ -108,8 +110,14 @@ public class ZoieIndexService {
 				100);
 		for (DocumentMessage doc_message : docPackages) {
 
-			DataEvent<DataDocument> de = new DataEvent<DataDocument>(
-					new DataDocument(doc_message), "1");
+			DataDocument dd = null;
+			if (doc_message.getDeleted()) {
+				dd = new DataDocument(doc_message.getDocUID());
+			} else {
+				dd = new DataDocument(doc_message);
+			}
+
+			DataEvent<DataDocument> de = new DataEvent<DataDocument>(dd, "1");
 			eventList.add(de);
 
 		}
@@ -119,8 +127,7 @@ public class ZoieIndexService {
 			zoie.flushEvents(10000);
 			int n = eventList.size();
 			if (n > 0 && log.isInfoEnabled()) {
-				log.info("Read:" + n
-						+ " document messages for indexing...");
+				log.info("Read:" + n + " document messages for indexing...");
 			}
 		} catch (ZoieException e) {
 			if (log.isErrorEnabled()) {

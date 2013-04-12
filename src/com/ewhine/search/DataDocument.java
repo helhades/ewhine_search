@@ -13,11 +13,9 @@ public class DataDocument implements ZoieIndexable {
 
 	public DataDocument(DocumentMessage qm) {
 
-		int type = qm.getData_type() & 0xF;
-		this.uid = qm.getObject_id() << 4 | type;
+		this.uid = qm.getDocUID();
 
 		this.doc = qm.map();
-		
 		this.valid = true;
 	}
 

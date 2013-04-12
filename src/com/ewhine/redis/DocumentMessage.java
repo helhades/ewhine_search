@@ -23,6 +23,7 @@ public class DocumentMessage {
 	int created_at;
 	int updated_at;
 	long thread_id = 0;
+	boolean deleted = false;
 
 	public DocumentMessage() {
 
@@ -71,7 +72,18 @@ public class DocumentMessage {
 	public long getGroup_id() {
 		return group_id;
 	}
-
+	
+	public boolean getDeleted() {
+		return deleted;
+	}
+	
+	public long getDocUID() {
+		int type = data_type & 0xF;
+		long uid = object_id << 4 | type;
+		return uid;
+	}
+	
+	
 	public void setGroup_id(long group_id) {
 		this.group_id = group_id;
 	}
@@ -135,7 +147,7 @@ public class DocumentMessage {
 			d.add(f_name);
 
 			Fieldable f_keyword = new Field("keyword", sb.toString(),
-					Store.YES, Index.ANALYZED);
+					Store.NO, Index.ANALYZED);
 			d.add(f_keyword);
 
 		}
