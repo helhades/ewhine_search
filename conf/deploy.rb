@@ -2,7 +2,7 @@
 #  Using RVM rubies with Capistrano http://beginrescueend.com/integration/capistrano/
 #$:.unshift(File.expand_path('./lib', ENV['rvm_path'])) # Add RVM's lib directory to the load path.
 require 'rvm/capistrano'
-set :rvm_ruby_string, 'ruby-1.9.3-p374@ewhine'        # Or whatever env you want it to run in.
+set :rvm_ruby_string, 'ruby-2.0.0-p0@ewhine'        # Or whatever env you want it to run in.
 set :rvm_type, :user            # system
 #ssh_options[:verbose] = :debug
 set :keep_releases, 1
@@ -59,6 +59,9 @@ namespace :deploy do
     #run "cd #{latest_release} ; ant jar"
   end
 
+  task :migrate do
+  end
+
 end
 
 after "deploy:setup","deploy:file_store"
@@ -69,13 +72,14 @@ namespace :deploy do
     run "mkdir -p #{deploy_to}/indexs"
   end
 
+
 end
 
 #skipping asset pre-compilation if no change happen.
 #Only support git.
 
 
-after "deploy:create_symlink", "deploy:link_file_store"
+after "deploy:create_symlink", "deploy:link_file_store","deploy:create_dir"
 before "all","deploy:stop","deploy:update","deploy:start"
 #before "deploy:assets:precompile","deploy:assets:clean_assets"
 #after "deploy:update", "deploy:cleanup"
@@ -83,6 +87,11 @@ before "all","deploy:stop","deploy:update","deploy:start"
 namespace :deploy do
   task :link_file_store do
     run "cd #{current_path} && ln -s #{deploy_to}/indexs indexs"
+  end
+  task :create_dir, :roles => :web, :except => { :no_release => true } do
+    #run ""
+    run "cd #{current_path}; mkdir -p logs", :pty => false
+    run "cd #{current_path}; mkdir -p tmp", :pty => false
   end
 
 end
@@ -93,11 +102,7 @@ namespace :deploy do
     task :precompile, :roles => :web, :except => { :no_release => true } do
       #run "cd #{latest_release} ; nohup #{rake} RAILS_ENV=#{rails_env} #{asset_env} assets:precompile >> log/asset.log 2>&1 &", :pty => false
     end
-    task :symlink, :roles => :web, :except => { :no_release => true } do
-      #run ""
-      run "cd #{latest_release}; mkdir -p logs", :pty => false
-      run "cd #{latest_release}; mkdir -p tmp", :pty => false
-    end
+
   end
 end
 
@@ -119,15 +124,14 @@ namespace :deploy do
     #run "#{sudo} /etc/init.d/nginx stop"
     #run "cd #{current_path} && /etc/init.d/thin stop"
   end
+end
 
+desc "all update"
+task :all do
+  run "echo all finished!"
+end
 
-  desc "all update"
-  task :all do
-    run "echo all finished!"
-  end
-
-  task :locale do
-    run ". ~/.bash_profile && locale",:pty=>false
-    run "sleep 5"
-  end
+task :locale do
+  run ". ~/.bash_profile && locale",:pty=>false
+  run "sleep 5"
 end
