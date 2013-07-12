@@ -1,7 +1,7 @@
 # setup rvm
 #  Using RVM rubies with Capistrano http://beginrescueend.com/integration/capistrano/
 #$:.unshift(File.expand_path('./lib', ENV['rvm_path'])) # Add RVM's lib directory to the load path.
-require 'rvm/capistrano'
+#require 'rvm/capistrano'
 set :rvm_ruby_string, 'ruby-2.0.0-p0@ewhine'        # Or whatever env you want it to run in.
 set :rvm_type, :user            # system
 #ssh_options[:verbose] = :debug

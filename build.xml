@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="GBK"?>
 <project default="all" name="com.ewhine.search" basedir=".">
 	<property name="lib.home" value="." />
+	<property name="zip.file.name" value="ewhine_search" />
 	<property name="src.home" value="src" />
 	<property name="classes.home" value="classes" />
 	<property name="dist.home" value="lib" />
@@ -33,7 +34,7 @@
 	<target name="clean" description="清除目录">
 		<delete dir="${classes.home}" failonerror="false" />
 	</target>
-	
+
 	<target name="index:clean" description="清除目录">
 		<delete dir="${index.home}" failonerror="false" />
 	</target>
@@ -49,7 +50,7 @@
 	</target>
 
 	<target name="all" description="整体的操作" depends="clean,init,javac,jar">
-		
+
 	</target>
 
 
@@ -86,11 +87,24 @@
 		</jar>
 	</target>
 
+	<target name="zip" description="Zip all file" depends="clean,init,javac,jar">
+		<delete file="${zip.file.name}.zip" failonerror="false" />
+		<zip destfile="${zip.file.name}.zip">
+		    <zipfileset dir="lib" prefix="${zip.file.name}/lib"/>
+			<zipfileset dir="bin" prefix="${zip.file.name}/bin"/>
+		    <zipfileset dir="indexs" excludes="**/*" prefix="${zip.file.name}/indexs"/>
+			<zipfileset dir="conf" prefix="${zip.file.name}/conf"/>
+			<zipfileset dir="logs" excludes="**/*" prefix="${zip.file.name}/logs"/>
+			<zipfileset dir="tmp" excludes="**/*" prefix="${zip.file.name}/tmp"/>
+			<zipfileset dir="." includes="server.jar" fullpath="${zip.file.name}/server.jar"/>
+		  </zip>
+	</target>
+
 	<target name="setup" description="create runtime structure" depends="clean,init,javac,jar">
-		
+
 		<copy todir="${config.dist}" overwrite="false" flatten="false">
 			<fileset dir="${src.home}">
-				
+
 				<include name="**\*.properties" />
 				<include name="**\*.xml" />
 
