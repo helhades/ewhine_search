@@ -5,12 +5,13 @@ public interface ObjectType {
 	
 	
 	
-	public static int USER = 1;
-	public static int GROUP = 2;
-	public static int TOPIC = 3;
-	public static int ATTACHMENT_FILE = 4;
+	public static int USER = 1000000;
+	public static int GROUP = 1000002;
+	public static int TOPIC = 1000003;
+	public static int ATTACHMENT_FILE = 1000004;
 
-	public static int MESSAGE = 5;
+	public static int MESSAGE = 1000005;
+
 	public static int EVENT = 6;
 	public static int MINI_TASK = 7;
 	public static int QUESTION = 8;

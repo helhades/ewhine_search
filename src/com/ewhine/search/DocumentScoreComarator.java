@@ -18,7 +18,7 @@ public class DocumentScoreComarator extends FieldComparator<BigDecimal> {
 	private String fieldName;
 	private BigDecimal[] values;
 	private int[] docUpdated;
-	// private long[] doc_id;
+	private long[] doc_id;
 	private Scorer scorer;
 	private BigDecimal bottom;
 
@@ -55,7 +55,7 @@ public class DocumentScoreComarator extends FieldComparator<BigDecimal> {
 	public void setNextReader(IndexReader reader, int docBase)
 			throws IOException {
 		docUpdated = FieldCache.DEFAULT.getInts(reader, fieldName);
-		// doc_id = FieldCache.DEFAULT.getLongs(reader, "o_id");
+		doc_id = FieldCache.DEFAULT.getLongs(reader, "o_id");
 	}
 
 	@Override
@@ -85,7 +85,14 @@ public class DocumentScoreComarator extends FieldComparator<BigDecimal> {
 			// System.out.println("doc:" + doc_id[doc] +",score" +
 			// out.toPlainString()+",updated_at:" + doc_updated_at);
 			if (log.isInfoEnabled()) {
-				log.info("qid:3217,"+"tf-idf:" + doc_score+",doc_socore:" + out.multiply(new BigDecimal(10000)).toPlainString());
+				StringBuilder sb = new StringBuilder("qid:3217,");
+				sb.append("doc_id:");
+				sb.append(doc_id[doc]);
+				sb.append(",tf-idf:");
+				sb.append(doc_score);
+				sb.append(",doc_socore:");
+				sb.append(out.multiply(new BigDecimal(10000)).toPlainString());
+				log.info(sb.toString());
 			}
 			return out;
 

@@ -35,7 +35,8 @@ public class CatalogResultCollector extends Collector {
 	private long[] group_ids;
 	private int[] type_ids;
 	private long[] thread_ids;
-	private Collector[] collectors = new Collector[20]; // max
+	private HashMap<Integer,Collector> collectors = new HashMap<Integer,Collector>();
+	//private Collector[] collectors = new Collector[20]; // max
 																// type
 																// size.
 
@@ -54,10 +55,12 @@ public class CatalogResultCollector extends Collector {
 
 			try {
 				if (type_id == ObjectType.MESSAGE) {
-					collectors[type_id] = new ThreadCollector(keep_size);
+					ThreadCollector t_collector = new ThreadCollector(keep_size);
+					collectors.put(type_id,t_collector);
 				} else {
-					collectors[type_id] = TopFieldCollector.create(sort,
+					TopFieldCollector t_collector = TopFieldCollector.create(sort,
 							keep_size, false, true, false, false);
+					collectors.put(type_id,t_collector);
 				}
 
 			} catch (IOException e) {
@@ -88,24 +91,27 @@ public class CatalogResultCollector extends Collector {
 	public void collect(int docID) throws IOException {
 
 		long g_id = group_ids[docID];
-		// System.out.println("doc_id:" + docID + ",g_id:" + g_id);
-
+		
+		
 		if (has_auth(g_id)) {
+			
 			// find a catalog type collector to collect the doc.
+			//System.out.println("doc_id:" + docID + ",g_id:" + g_id + ",type_id=" + type_id);
+			
 			int type_id = type_ids[docID];
 			Collector collector = null;
 
-			if (type_id > ObjectType.MESSAGE) { // map the rest type to message
-				collector = collectors[ObjectType.MESSAGE];
+			if (type_id < ObjectType.USER) { // map the rest type to message
+				collector = collectors.get(ObjectType.MESSAGE);
 			} else {
-				collector = collectors[type_id];
+				collector = collectors.get(type_id);
 			}
 
 			// increase the conservations hit count.
 
 			if (collector != null) {
-
-				if (type_id >= ObjectType.MESSAGE) { // mini_app object.
+				
+				if (type_id < ObjectType.USER) { // mini_app object.
 					long message_thread_id = this.thread_ids[docID];
 
 					if (!merged_thread_ids.contains(message_thread_id)) {
@@ -121,6 +127,7 @@ public class CatalogResultCollector extends Collector {
 	}
 
 	private boolean has_auth(long g_id) {
+		
 		return (g_id > 0 && Arrays.binarySearch(user_group_ids, g_id) >= 0)
 				|| (g_id < 0 && Arrays.binarySearch(user_conversation_ids,
 						(-g_id)) >= 0);
@@ -128,20 +135,20 @@ public class CatalogResultCollector extends Collector {
 
 	public HashMap<Integer, TopDocs> topDocs() {
 		HashMap<Integer, TopDocs> tops = new HashMap<Integer, TopDocs>();
-		for (int i = 0; i < collectors.length; i++) {
-			if (collectors[i] != null) {
-				if (i == ObjectType.MESSAGE) {
-					tops.put(i, ((ThreadCollector) collectors[i]).topDocs());
+		for (int key : collectors.keySet()) {
+			if (collectors.get(key) != null) {
+				if (key == ObjectType.MESSAGE) {
+					tops.put(key, ((ThreadCollector) collectors.get(key)).topDocs());
 				} else {
-					tops.put(i, ((TopFieldCollector) collectors[i]).topDocs());
+					tops.put(key, ((TopFieldCollector) collectors.get(key)).topDocs());
 				}
 			}
-		}
+		}	
 		return tops;
 	}
 	
 	public Collector getCollector(int type_id) {
-		return collectors[type_id];
+		return collectors.get(type_id);
 	}
 
 	public int getConverstaionsHitCount() {
@@ -155,7 +162,7 @@ public class CatalogResultCollector extends Collector {
 		this.type_ids = FieldCache.DEFAULT.getInts(reader, "type");
 		this.thread_ids = FieldCache.DEFAULT.getLongs(reader, "thread_id");
 
-		for (Collector collector : collectors) {
+		for (Collector collector : collectors.values()) {
 			if (collector != null) {
 				collector.setNextReader(reader, docBase);
 			}
@@ -166,7 +173,7 @@ public class CatalogResultCollector extends Collector {
 	@Override
 	public void setScorer(Scorer scorer) throws IOException {
 
-		for (Collector collector : collectors) {
+		for (Collector collector : collectors.values()) {
 			if (collector != null) {
 				collector.setScorer(scorer);
 			}

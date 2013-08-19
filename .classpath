@@ -24,6 +24,7 @@
 	<classpathentry kind="lib" path="lib/pinyin4j-2.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/netty-3.5.10.Final.jar"/>
 	<classpathentry kind="lib" path="lib/cn.gov.cbrc.db.jar"/>
+	<classpathentry kind="lib" path="lib/zoie-core-3.3.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/lucene-highlighter-3.6.0.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-memory-3.5.0.jar"/>
