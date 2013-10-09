@@ -4,12 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import redis.clients.jedis.Jedis;
-import cn.gov.cbrc.db.StoreManager;
-import cn.gov.cbrc.db.TableClass;
 import cn.gov.cbrc.wh.log.Log;
 import cn.gov.cbrc.wh.log.LogFactory;
-
-import com.ewhine.model.Message;
 
 public class RedisQueue {
 	final private static Log log = LogFactory.getLog(RedisQueue.class);
@@ -32,7 +28,6 @@ public class RedisQueue {
 	public void start() {
 
 		jedis = new Jedis("localhost");
-
 		// this.clear();
 		// runThread.start();
 		log.info("start running message queue.");
@@ -48,8 +43,6 @@ public class RedisQueue {
 			if (results == null || results.isEmpty()) {
 				return collection;
 			}
-
-			
 			if (results != null && results.size() == 2) {
 				collection.add(results.get(1));
 			} else {
@@ -63,18 +56,28 @@ public class RedisQueue {
 	}
 
 	public byte[] readMessage() {
-		log.debug("entry the block method now ...");
-		List<byte[]> results = jedis.blpop(timeout, queueName.getBytes());
-		if (results == null || results.isEmpty()) {
+		List<byte[]> results = null;
+		try {
+			log.debug("entry the block method now ,read key: " + queueName
+					+ ",timeout:" + timeout + "...");
+			 results = jedis.blpop(timeout, queueName.getBytes());
+
+			// log.debug("read result: " + results + "...");
+		} catch (redis.clients.jedis.exceptions.JedisException je) {
+			log.error("Connect redis error:",je);
+			jedis.disconnect();
+			jedis.connect();
+		}
+
+		if (results != null && results.size() == 2) {
+			log.debug("with timeout : " + timeout + " get not empty list : ");
+			return results.get(1);
+		} else if (results == null || results.isEmpty()) {
 			log.debug("with timeout : " + timeout
 					+ " get empty list. will continue now ...");
 			return null;
-		}
-
-		log.debug("with timeout : " + timeout + " get not empty list : ");
-		if (results != null && results.size() == 2) {
-			return results.get(1);
 		} else {
+
 			log.error("Data format error,expected: results.size=2,but:"
 					+ results.size());
 			return null;
@@ -85,8 +88,8 @@ public class RedisQueue {
 	// jedis.set(key.getBytes(), value);
 	// }
 	//
-	// public byte[] getValue(String key) {
-	// return jedis.get(key.getBytes());
+	// public List<byte[]> getValue(String key) {
+	// return jedis.blpop(5, key.getBytes());
 	// }
 
 	public void stop() {
@@ -96,6 +99,7 @@ public class RedisQueue {
 		}
 
 		if (jedis != null) {
+			jedis.disconnect();
 			jedis.quit();
 			jedis = null;
 		}
@@ -116,26 +120,12 @@ public class RedisQueue {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		TableClass<Message> msgTable = StoreManager.open(Message.class);
-		RedisQueue queue = new RedisQueue("messages");
 
-		queue.start();
-
-		System.out.println("sart...");
-
-		Message m = msgTable.find_by_id(3);
-		System.out.println("message:" + m);
-		queue.stop();
-
-		List<byte[]> out = queue.popMessage();
-		System.out.println("out length:" + out.size());
-		try {
-			Thread.sleep(12000);
-			System.out.println("Finished!");
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		// RedisQueue queue = new RedisQueue("ewhine:search:messages");
+		// queue.start();
+		// List<byte[]> queue_list = queue.getValue("ewhine:search:messages");
+		// System.out.println("queue list:" + queue_list.size());
+		// System.out.println("queue empty:" + queue_list.isEmpty());
 
 	}
 

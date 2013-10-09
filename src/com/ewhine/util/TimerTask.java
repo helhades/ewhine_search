@@ -33,18 +33,19 @@ public class TimerTask {
 						try {
 							if (runnable != null) {
 								runnable.run();
-							}
-
-							try {
-								this.wait(cycleTime);
-							} catch (InterruptedException e) {
-								return;
-							}
+							}	
 
 						} catch (Throwable e) {
 							if (log.isErrorEnabled()) {
+								e.printStackTrace();
 								log.error("Auto task thread error!", e);
 							}
+						}
+						
+						try {
+							this.wait(cycleTime);
+						} catch (InterruptedException e) {
+							return;
 						}
 
 					}

@@ -1,6 +1,7 @@
 package com.ewhine.search.index;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 import org.apache.lucene.queryParser.ParseException;
@@ -43,14 +44,17 @@ public class IndexServer {
 						DocumentMessage doc = gson.fromJson(new String(q_msg,
 								"utf-8"), DocumentMessage.class);
 
-						if (log.isDebugEnabled()) {
-							log.debug("Readed a doc:" + doc);
-						}
 						recieved.add(doc);
 
 					} catch (IOException e) {
+						String qmsg = "";
+						try {
+							qmsg = new String(q_msg, "utf-8");
+						} catch (UnsupportedEncodingException e1) {
+
+						}
 						if (log.isErrorEnabled()) {
-							log.error("Read message error.", e);
+							log.error("Read message:" + qmsg + " error.", e);
 						}
 					}
 
@@ -58,8 +62,7 @@ public class IndexServer {
 						break; // try this batch first.
 					}
 				}
-				
-				
+
 				indexService.indexDocument(recieved);
 
 			}
