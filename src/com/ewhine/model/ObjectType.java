@@ -5,9 +5,9 @@ public interface ObjectType {
 	
 	
 	
-	public static int USER = 1000000;
-	public static int GROUP = 1000002;
-	public static int TOPIC = 1000003;
+	public static int USER = 1000002;
+	public static int GROUP = 1000003;
+	public static int TOPIC = 1000000;
 	public static int ATTACHMENT_FILE = 1000004;
 
 	public static int MESSAGE = 1000005;
